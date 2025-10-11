@@ -254,7 +254,7 @@ class AchievementDashboard {
         const totalAchievements = this.achievements.reduce((sum, game) => sum + game.unlockedAchievements, 0);
         const totalPossible = this.achievements.reduce((sum, game) => sum + game.totalAchievements, 0);
         const totalGames = this.achievements.length;
-        const completionRate = totalPossible > 0 ? ((totalAchievements / totalPossible) * 100).toFixed(1) : 0;
+        const completionRate = totalPossible > 0 ? Math.round((totalAchievements / totalPossible) * 100) : 0;
         
         const completedGames = this.achievements.filter(game => game.dateCompleted).length;
         const totalTime = this.achievements.reduce((sum, game) => sum + (game.playedTime || 0), 0);
@@ -327,14 +327,22 @@ class AchievementDashboard {
                          <div class="game-image-fallback" style="display: none;">${game.name}</div>` :
                         `<div class="game-image">${game.name}</div>`
                     }
-                    <div class="game-platform ${game.platform}">${game.platform.toUpperCase()}</div>
-                    ${game.playedTime ? `<div class="played-time">${formatPlayedTime(game.playedTime)}</div>` : ''}
+                    <div class="game-platform ${game.platform}">
+                        ${game.platform === 'steam' ? '<img src="assets/icons/steam.svg" alt="Steam" class="platform-icon">' : 
+                          game.platform === 'gog' ? '<img src="assets/icons/gog.svg" alt="GOG" class="platform-icon">' : 
+                          game.platform === 'retroachievements' ? '<i class="fas fa-medal"></i>' : 
+                          game.platform.toUpperCase()}
+                    </div>
                     <div class="completion-overlay">
                         <div class="game-title">${game.name}</div>
                         <div class="completion-text">${completionPercentage}% • ${game.unlockedAchievements}/${game.totalAchievements} achievements</div>
-                        ${game.dateCompleted ? 
-                            `<div class="completion-date">${formatDate(game.dateCompleted)}</div>` : 
-                            game.lastPlayed ? `<div class="completion-date">Last played ${formatDate(game.lastPlayed)}</div>` : ''
+                        ${game.dateCompleted || game.lastPlayed ? 
+                            `<div class="completion-date">Last achievement: ${game.dateCompleted ? formatDate(game.dateCompleted) : formatDate(game.lastPlayed)}</div>` : 
+                            ''
+                        }
+                        ${game.playedTime ? 
+                            `<div class="completion-date">Total hours: ${formatPlayedTime(game.playedTime)}</div>` : 
+                            ''
                         }
                     </div>
                 </div>

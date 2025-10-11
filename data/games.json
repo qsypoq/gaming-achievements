@@ -7,7 +7,8 @@
     "totalAchievements": 49,
     "unlockedAchievements": 49,
     "dateCompleted": "2025-09",
-    "playedTime": 134
+    "playedTime": 134,
+    "coverImage": "assets/covers/stardew-valley.jpg"
   },
   {
     "id": "streets-of-rogue",
@@ -17,6 +18,7 @@
     "totalAchievements": 52,
     "unlockedAchievements": 52,
     "dateCompleted": "2025-10",
-    "playedTime": 38
+    "playedTime": 38,
+    "coverImage": "assets/covers/streets-of-rogue.jpg"
   }
 ]

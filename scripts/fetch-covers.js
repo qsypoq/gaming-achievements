@@ -22,6 +22,7 @@ const path = require('path');
 // Configuration
 const STEAM_SEARCH_API = 'https://store.steampowered.com/api/storesearch/';
 const STEAM_CDN_BASE = 'https://cdn.akamai.steamstatic.com/steam/apps/';
+const COVERS_DIR = path.join(process.cwd(), 'assets', 'covers');
 
 // Steam image formats (in order of preference)
 const STEAM_IMAGE_FORMATS = [
@@ -34,6 +35,14 @@ class CoverFetcher {
     constructor() {
         this.gamesData = [];
         this.updated = false;
+        this.ensureCoversDirectory();
+    }
+
+    ensureCoversDirectory() {
+        if (!fs.existsSync(COVERS_DIR)) {
+            fs.mkdirSync(COVERS_DIR, { recursive: true });
+            console.log(`📁 Created covers directory: ${COVERS_DIR}\n`);
+        }
     }
 
     async run() {
@@ -105,11 +114,11 @@ class CoverFetcher {
 
     async fetchSteamCover(game) {
         try {
-            // Try to get App ID from achievement link first
-            let appId = this.extractSteamAppId(game.link);
+            // Try to get App ID from platformId first, then link, then search
+            let appId = game.platformId || this.extractSteamAppId(game.link);
             
             if (appId) {
-                console.log(`  📋 App ID from link: ${appId}`);
+                console.log(`  📋 App ID: ${appId}`);
             } else {
                 console.log(`  🔍 Searching Steam store...`);
                 appId = await this.searchSteamStore(game.name);
@@ -128,9 +137,13 @@ class CoverFetcher {
                 console.log(`  🖼️  Testing: ${format}`);
 
                 if (await this.checkImageExists(imageUrl)) {
-                    game.coverImage = imageUrl;
-                    console.log(`  💾 Using: ${imageUrl}`);
-                    return true;
+                    // Download the image locally
+                    const localPath = await this.downloadImage(imageUrl, game.id, format);
+                    if (localPath) {
+                        game.coverImage = localPath;
+                        console.log(`  💾 Downloaded to: ${localPath}`);
+                        return true;
+                    }
                 }
             }
 
@@ -197,6 +210,45 @@ class CoverFetcher {
             https.get(url, { method: 'HEAD' }, (res) => {
                 resolve(res.statusCode === 200);
             }).on('error', () => resolve(false));
+        });
+    }
+
+    async downloadImage(url, gameId, format) {
+        return new Promise((resolve) => {
+            const ext = path.extname(format);
+            const filename = `${gameId}${ext}`;
+            const localPath = path.join(COVERS_DIR, filename);
+            const relativePath = `assets/covers/${filename}`;
+
+            // Skip if already exists
+            if (fs.existsSync(localPath)) {
+                console.log(`  ♻️  Already downloaded`);
+                resolve(relativePath);
+                return;
+            }
+
+            const file = fs.createWriteStream(localPath);
+            
+            https.get(url, (response) => {
+                if (response.statusCode === 200) {
+                    response.pipe(file);
+                    file.on('finish', () => {
+                        file.close();
+                        resolve(relativePath);
+                    });
+                } else {
+                    file.close();
+                    fs.unlinkSync(localPath);
+                    resolve(null);
+                }
+            }).on('error', (err) => {
+                file.close();
+                if (fs.existsSync(localPath)) {
+                    fs.unlinkSync(localPath);
+                }
+                console.log(`    ⚠️  Download error: ${err.message}`);
+                resolve(null);
+            });
         });
     }
 

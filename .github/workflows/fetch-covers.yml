@@ -180,7 +180,7 @@ jobs:
     - name: Check for changes
       id: check-changes
       run: |
-        if git diff --quiet data/games.json; then
+        if git diff --quiet data/games.json && [ -z "$(git ls-files --others --exclude-standard assets/covers/)" ]; then
           echo "changes=false" >> $GITHUB_OUTPUT
         else
           echo "changes=true" >> $GITHUB_OUTPUT
@@ -191,7 +191,7 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add data/games.json
+        git add data/games.json assets/covers/
         git commit -m "🎮 Auto-fetch game cover images"
         git push
       env:
