@@ -1,0 +1,218 @@
+name: Fetch Game Cover Images
+
+on:
+  push:
+    branches: [ main ]
+    paths: 
+      - 'data/games.json'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  fetch-covers:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Create fetch script
+      run: |
+        cat > fetch-covers.js << 'EOF'
+        const fs = require('fs');
+        const https = require('https');
+        const path = require('path');
+        
+        // Read games.json
+        const gamesData = JSON.parse(fs.readFileSync('data/games.json', 'utf8'));
+        let updated = false;
+        
+        async function fetchSteamAppId(gameName) {
+          return new Promise((resolve) => {
+            const searchUrl = `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(gameName)}&l=english&cc=US`;
+            
+            https.get(searchUrl, (res) => {
+              let data = '';
+              res.on('data', chunk => data += chunk);
+              res.on('end', () => {
+                try {
+                  const result = JSON.parse(data);
+                  if (result.items && result.items.length > 0) {
+                    // Find best match (exact or closest)
+                    const exactMatch = result.items.find(item => 
+                      item.title.toLowerCase() === gameName.toLowerCase()
+                    );
+                    const appId = exactMatch ? exactMatch.id : result.items[0].id;
+                    resolve(appId);
+                  } else {
+                    resolve(null);
+                  }
+                } catch (e) {
+                  console.error(`Error parsing Steam search for ${gameName}:`, e.message);
+                  resolve(null);
+                }
+              });
+            }).on('error', (e) => {
+              console.error(`Error fetching Steam data for ${gameName}:`, e.message);
+              resolve(null);
+            });
+          });
+        }
+        
+        async function checkImageExists(url) {
+          return new Promise((resolve) => {
+            https.get(url, { method: 'HEAD' }, (res) => {
+              resolve(res.statusCode === 200);
+            }).on('error', () => resolve(false));
+          });
+        }
+        
+        async function updateGameCovers() {
+          console.log('🎮 Fetching cover images for games...');
+          
+          for (const game of gamesData) {
+            console.log(`\n📍 Processing: ${game.name}`);
+            
+            // Skip if already has cover image
+            if (game.coverImage) {
+              console.log(`  ✅ Already has cover: ${game.coverImage}`);
+              continue;
+            }
+            
+            // Handle Steam games
+            if (game.platform === 'steam') {
+              console.log('  🔍 Searching Steam...');
+              
+              // Try to extract Steam App ID from link first
+              let appId = null;
+              if (game.link && game.link.includes('steamcommunity.com')) {
+                const match = game.link.match(/\/stats\/(\d+)\//);
+                if (match) {
+                  appId = match[1];
+                  console.log(`  📋 Found App ID from link: ${appId}`);
+                }
+              }
+              
+              // If no App ID from link, search Steam
+              if (!appId) {
+                appId = await fetchSteamAppId(game.name);
+                if (appId) {
+                  console.log(`  🔍 Found App ID from search: ${appId}`);
+                }
+              }
+              
+              if (appId) {
+                // Try different Steam image formats
+                const imageFormats = [
+                  `library_600x900_2x.jpg`,
+                  `library_600x900.jpg`,
+                  `header.jpg`
+                ];
+                
+                for (const format of imageFormats) {
+                  const imageUrl = `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/${format}`;
+                  console.log(`  🖼️  Checking: ${format}`);
+                  
+                  if (await checkImageExists(imageUrl)) {
+                    game.coverImage = imageUrl;
+                    updated = true;
+                    console.log(`  ✅ Added cover: ${imageUrl}`);
+                    break;
+                  }
+                }
+                
+                if (!game.coverImage) {
+                  console.log(`  ❌ No images found for App ID: ${appId}`);
+                }
+              } else {
+                console.log(`  ❌ Steam App ID not found`);
+              }
+            }
+            
+            // WIP Handle GOG games
+            else if (game.platform === 'gog') {
+              console.log('  📝 GOG game - manual cover needed');
+            }
+            
+            // WIP Handle RetroAchievements games
+            else if (game.platform === 'retroachievements') {
+              console.log('  📝 RetroAchievements game - manual cover needed');
+            }
+            
+            // Add small delay to be respectful to APIs
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+          
+          if (updated) {
+            console.log('\n💾 Saving updated games.json...');
+            fs.writeFileSync('data/games.json', JSON.stringify(gamesData, null, 2));
+            console.log('✅ Games data updated successfully!');
+          } else {
+            console.log('\n📋 No updates needed - all games already have covers or none found');
+          }
+          
+          return updated;
+        }
+        
+        updateGameCovers().then((wasUpdated) => {
+          if (wasUpdated) {
+            console.log('\n🎉 Cover images fetched successfully!');
+            process.exit(0);
+          } else {
+            console.log('\n📋 No changes made');
+            process.exit(0);
+          }
+        }).catch((error) => {
+          console.error('❌ Error:', error);
+          process.exit(1);
+        });
+        EOF
+    
+    - name: Run cover fetcher
+      run: node fetch-covers.js
+      
+    - name: Check for changes
+      id: check-changes
+      run: |
+        if git diff --quiet data/games.json; then
+          echo "changes=false" >> $GITHUB_OUTPUT
+        else
+          echo "changes=true" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Commit and push changes
+      if: steps.check-changes.outputs.changes == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add data/games.json
+        git commit -m "🎮 Auto-fetch game cover images"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Create summary
+      if: always()
+      run: |
+        echo "## 🎮 Game Cover Fetch Results" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ steps.check-changes.outputs.changes }}" == "true" ]; then
+          echo "✅ **Success!** Game covers were updated and committed." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Changes made:" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          git show --name-only --pretty=format: HEAD | head -10 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        else
+          echo "📋 **No changes** - All games already have cover images or none could be found." >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Manual cover sources:" >> $GITHUB_STEP_SUMMARY
+        echo "- **Steam**: Automatically fetched ✅" >> $GITHUB_STEP_SUMMARY  
+        echo "- **GOG**: Add manually from store pages" >> $GITHUB_STEP_SUMMARY
+        echo "- **RetroAchievements**: Add manually from game pages" >> $GITHUB_STEP_SUMMARY

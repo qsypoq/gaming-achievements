@@ -1,0 +1,22 @@
+[
+  {
+    "id": "stardew-valley",
+    "name": "Stardew Valley",
+    "platform": "steam",
+    "platformId": "413150",
+    "totalAchievements": 49,
+    "unlockedAchievements": 49,
+    "dateCompleted": "2025-09",
+    "playedTime": 134
+  },
+  {
+    "id": "streets-of-rogue",
+    "name": "Streets of Rogue",
+    "platform": "steam",
+    "platformId": "512900",
+    "totalAchievements": 52,
+    "unlockedAchievements": 52,
+    "dateCompleted": "2025-10",
+    "playedTime": 38
+  }
+]

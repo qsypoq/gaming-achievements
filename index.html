@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaming Achievements Dashboard</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">
+                <i class="fas fa-trophy"></i>
+                Gaming Achievements
+            </h1>
+            <p class="subtitle">Tracking progress across Steam, GOG & RetroAchievements</p>
+        </header>
+
+        <nav class="platform-nav">
+            <button class="platform-btn active" data-platform="all">
+                <i class="fas fa-gamepad"></i>
+                All Platforms
+            </button>
+            <button class="platform-btn" data-platform="steam">
+                <i class="fab fa-steam"></i>
+                Steam
+            </button>
+            <button class="platform-btn" data-platform="gog">
+                <i class="fas fa-compact-disc"></i>
+                GOG
+            </button>
+            <button class="platform-btn" data-platform="retroachievements">
+                <i class="fas fa-medal"></i>
+                RetroAchievements
+            </button>
+        </nav>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-number" id="total-achievements">0</h3>
+                    <p class="stat-label">Total Achievements</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-gamepad"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-number" id="total-games">0</h3>
+                    <p class="stat-label">Games Played</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-number" id="completion-rate">0%</h3>
+                    <p class="stat-label">Completion Rate</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-number" id="rare-achievements">0</h3>
+                    <p class="stat-label">Completed Games</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-number" id="total-time">0h</h3>
+                    <p class="stat-label">Total Time Played</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="search-input">Search:</label>
+                <input type="text" id="search-input" placeholder="Search games...">
+            </div>
+            <div class="filter-group">
+                <label for="sort-select">Sort by:</label>
+                <select id="sort-select">
+                    <option value="recent">Completion Date</option>
+                    <option value="name">Name</option>
+                    <option value="completion">Achievement Progress</option>
+                </select>
+            </div>
+        </div>
+
+        <main class="achievements-container">
+            <div class="loading" id="loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading achievements...</p>
+            </div>
+            
+            <div class="games-grid" id="games-grid">
+                <!-- Games will be dynamically loaded here -->
+            </div>
+
+            <div class="no-results" id="no-results" style="display: none;">
+                <i class="fas fa-search"></i>
+                <h3>No achievements found</h3>
+                <p>Try adjusting your filters or search terms</p>
+            </div>
+        </main>
+
+        <div class="achievement-modal" id="achievement-modal">
+            <div class="modal-content">
+                <span class="close-modal" id="close-modal">&times;</span>
+                <div class="modal-body" id="modal-body">
+                    <!-- Achievement details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Gaming Achievements Dashboard. Data from Steam, GOG, and RetroAchievements.</p>
+        <div class="footer-links">
+            <a href="https://github.com" target="_blank">
+                <i class="fab fa-github"></i>
+                GitHub
+            </a>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
