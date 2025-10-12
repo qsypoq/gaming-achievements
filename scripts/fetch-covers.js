@@ -187,7 +187,7 @@ class CoverFetcher {
                         if (result.items && result.items.length > 0) {
                             // Find exact match or use first result
                             const exactMatch = result.items.find(item => 
-                                item.title.toLowerCase() === gameName.toLowerCase()
+                                item.name && item.name.toLowerCase() === gameName.toLowerCase()
                             );
                             resolve(exactMatch ? exactMatch.id : result.items[0].id);
                         } else {
