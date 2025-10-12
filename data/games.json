@@ -39,7 +39,8 @@
     "totalAchievements": 7,
     "unlockedAchievements": 7,
     "dateCompleted": "2025-09",
-    "playedTime": 7
+    "playedTime": 7,
+    "coverImage": "assets/covers/magic-archery.jpg"
   },
   {
     "id": "101-cats-hidden",
@@ -49,6 +50,7 @@
     "totalAchievements": 100,
     "unlockedAchievements": 100,
     "dateCompleted": "2025-09",
-    "playedTime": 1
+    "playedTime": 1,
+    "coverImage": "assets/covers/101-cats-hidden.jpg"
   }
 ]
