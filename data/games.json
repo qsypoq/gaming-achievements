@@ -20,5 +20,35 @@
     "dateCompleted": "2025-10",
     "playedTime": 38,
     "coverImage": "assets/covers/streets-of-rogue.jpg"
+  },
+  {
+    "id": "mini-painter",
+    "name": "Mini Painter",
+    "platform": "steam",
+    "platformId": "3694840",
+    "totalAchievements": 16,
+    "unlockedAchievements": 16,
+    "dateCompleted": "2025-09",
+    "playedTime": 64
+  },
+  {
+    "id": "magic-archery",
+    "name": "Magic Archery",
+    "platform": "steam",
+    "platformId": "2905170",
+    "totalAchievements": 7,
+    "unlockedAchievements": 7,
+    "dateCompleted": "2025-09",
+    "playedTime": 7
+  },
+  {
+    "id": "101-cats-hidden",
+    "name": "101 Cats Hidden",
+    "platform": "steam",
+    "platformId": "2775180",
+    "totalAchievements": 100,
+    "unlockedAchievements": 100,
+    "dateCompleted": "2025-09",
+    "playedTime": 1
   }
 ]
