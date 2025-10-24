@@ -261,16 +261,10 @@ class AchievementDashboard {
 
     updateStats() {
         const totalAchievements = this.achievements.reduce((sum, game) => sum + game.unlockedAchievements, 0);
-        const totalPossible = this.achievements.reduce((sum, game) => sum + game.totalAchievements, 0);
-        const totalGames = this.achievements.length;
-        const completionRate = totalPossible > 0 ? Math.round((totalAchievements / totalPossible) * 100) : 0;
-        
         const completedGames = this.achievements.filter(game => game.dateCompleted).length;
         const totalTime = this.achievements.reduce((sum, game) => sum + (game.playedTime || 0), 0);
 
         document.getElementById('total-achievements').textContent = totalAchievements;
-        document.getElementById('total-games').textContent = totalGames;
-        document.getElementById('completion-rate').textContent = `${completionRate}%`;
         document.getElementById('rare-achievements').textContent = completedGames;
         document.getElementById('total-time').textContent = `${totalTime}h`;
     }
