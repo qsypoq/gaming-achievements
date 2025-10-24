@@ -39,12 +39,14 @@ class AchievementDashboard {
                 throw new Error('Invalid or empty games data');
             }
             
-            this.achievements = gamesData.map(game => ({
-                ...game,
-                image: `https://via.placeholder.com/350x200/1a1a2e/ffffff?text=${encodeURIComponent(game.name)}`,
-                isCompleted: game.dateCompleted !== null,
-                lastPlayed: game.dateCompleted || new Date().toISOString().split('T')[0]
-            }));
+            // Load games data - names should already be populated by workflow
+            this.achievements = gamesData.map(game => {
+                return {
+                    ...game,
+                    isCompleted: game.dateCompleted !== null,
+                    lastPlayed: game.dateCompleted || new Date().toISOString().split('T')[0]
+                };
+            });
 
             // Sort achievements
             this.achievements.sort((a, b) => {
@@ -62,6 +64,13 @@ class AchievementDashboard {
             // Load sample data as fallback
             this.loadSampleData();
         }
+    }
+
+    getGameLink(game) {
+        return gameName
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
     }
 
     async loadJSON(url) {
@@ -291,7 +300,7 @@ class AchievementDashboard {
         document.querySelectorAll('.game-card').forEach(card => {
             card.addEventListener('click', () => {
                 const gameId = card.dataset.gameId;
-                const game = this.achievements.find(g => g.id === gameId);
+                const game = this.achievements.find(g => this.generateGameId(g.name) === gameId);
                 if (game) {
                     const link = this.getGameLink(game);
                     if (link) {
@@ -302,8 +311,18 @@ class AchievementDashboard {
         });
     }
 
+    generateGameId(gameName) {
+        return gameName
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
+    }
+
     createGameCard(game) {
         const completionPercentage = Math.round((game.unlockedAchievements / game.totalAchievements) * 100);
+        
+        // Debug: Log the game object to console
+        console.log('Creating card for game:', game);
 
         const formatDate = (dateString) => {
             if (!dateString) return null;
@@ -320,7 +339,7 @@ class AchievementDashboard {
         };
 
         return `
-            <div class="game-card" data-game-id="${game.id}">
+            <div class="game-card" data-game-id="${this.generateGameId(game.name)}">
                 <div class="game-header">
                     ${game.coverImage ? 
                         `<img src="${game.coverImage}" alt="${game.name}" class="game-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">

@@ -1,4 +1,4 @@
-name: Fetch Game Cover Images
+name: Update Game Data and Fetch Covers
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
-  fetch-covers:
+  update-games:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -24,7 +24,7 @@ jobs:
       with:
         node-version: '18'
     
-    - name: Run cover fetcher
+    - name: Fetch game names and covers
       run: node scripts/fetch-covers.js
       
     - name: Check for changes
@@ -42,7 +42,7 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add data/games.json assets/covers/
-        git commit -m "🎮 Auto-fetch game cover images"
+        git commit -m "🎮 Auto-update game names and cover images"
         git push
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -50,16 +50,16 @@ jobs:
     - name: Create summary
       if: always()
       run: |
-        echo "## 🎮 Game Cover Fetch Results" >> $GITHUB_STEP_SUMMARY
+        echo "## 🎮 Game Data Update Results" >> $GITHUB_STEP_SUMMARY
         if [ "${{ steps.check-changes.outputs.changes }}" == "true" ]; then
-          echo "✅ **Success!** Game covers were updated and committed." >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Success!** Game names and covers were updated and committed." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Changes made:" >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
           git show --name-only --pretty=format: HEAD | head -10 >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
         else
-          echo "📋 **No changes** - All games already have cover images or none could be found." >> $GITHUB_STEP_SUMMARY
+          echo "📋 **No changes** - All games already have names and cover images or none could be found." >> $GITHUB_STEP_SUMMARY
         fi
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Manual cover sources:" >> $GITHUB_STEP_SUMMARY

@@ -24,11 +24,29 @@ const STEAM_SEARCH_API = 'https://store.steampowered.com/api/storesearch/';
 const STEAM_CDN_BASE = 'https://cdn.akamai.steamstatic.com/steam/apps/';
 const COVERS_DIR = path.join(process.cwd(), 'assets', 'covers');
 
-// Steam image formats (in order of preference)
+// Steam image formats (in order of preference) - comprehensive list
 const STEAM_IMAGE_FORMATS = [
-    'library_600x900_2x.jpg',  // Best quality vertical
-    'library_600x900.jpg',     // Standard vertical
-    'header.jpg'               // Fallback horizontal
+    // Primary vertical formats (preferred)
+    'library_600x900_2x.jpg',      // Best quality vertical (1200x1800)
+    'library_600x900.jpg',          // Standard vertical (600x900)
+    'library_hero.jpg',             // Hero image (3840x1240)
+    'library_hero_blur.jpg',        // Blurred hero image
+    
+    // Alternative vertical formats
+    'portrait.jpg',                 // Portrait format
+    'logo.png',                     // Game logo
+    
+    // Horizontal formats (fallbacks)
+    'header.jpg',                   // Standard header (460x215)
+    'header_292x136.jpg',          // Small header
+    'capsule_616x353.jpg',         // Large capsule
+    'capsule_467x181.jpg',         // Medium capsule
+    'capsule_184x69.jpg',          // Small capsule
+    
+    // Store page images (last resort)
+    'page_bg_generated_v6b.jpg',   // Generated background
+    'page_bg_generated.jpg',       // Generated background (older)
+    'ss_initial.jpg'               // Screenshot fallback
 ];
 
 class CoverFetcher {
@@ -131,20 +149,37 @@ class CoverFetcher {
                 }
             }
 
-            // Try different image formats
-            for (const format of STEAM_IMAGE_FORMATS) {
-                const imageUrl = `${STEAM_CDN_BASE}${appId}/${format}`;
-                console.log(`  🖼️  Testing: ${format}`);
+            // Try different image formats and CDN endpoints
+            const cdnEndpoints = [
+                'https://cdn.akamai.steamstatic.com/steam/apps/',
+                'https://cdn.cloudflare.steamstatic.com/steam/apps/',
+                'https://steamcdn-a.akamaihd.net/steam/apps/'
+            ];
 
-                if (await this.checkImageExists(imageUrl)) {
-                    // Download the image locally
-                    const localPath = await this.downloadImage(imageUrl, game.id, format);
-                    if (localPath) {
-                        game.coverImage = localPath;
-                        console.log(`  💾 Downloaded to: ${localPath}`);
-                        return true;
+            for (const format of STEAM_IMAGE_FORMATS) {
+                for (const cdnBase of cdnEndpoints) {
+                    const imageUrl = `${cdnBase}${appId}/${format}`;
+                    console.log(`  🖼️  Testing: ${format} (${cdnBase.includes('akamai') ? 'akamai' : cdnBase.includes('cloudflare') ? 'cloudflare' : 'legacy'})`);
+
+                    if (await this.checkImageExists(imageUrl)) {
+                        // Download the image locally using generated ID from game name
+                        const gameId = this.generateGameId(game.name);
+                        const localPath = await this.downloadImage(imageUrl, gameId, format);
+                        if (localPath) {
+                            game.coverImage = localPath;
+                            console.log(`  💾 Downloaded to: ${localPath}`);
+                            return true;
+                        }
                     }
                 }
+            }
+
+            // Last resort: try to get any screenshot from the game
+            console.log(`  🔄 Trying screenshots as last resort...`);
+            const screenshotPath = await this.tryScreenshotFallback(appId, game.id);
+            if (screenshotPath) {
+                game.coverImage = screenshotPath;
+                return true;
             }
 
             console.log(`  ❌ No valid images found for App ID: ${appId}`);
@@ -205,12 +240,78 @@ class CoverFetcher {
         });
     }
 
+    async fetchGameInfo(appId) {
+        return new Promise((resolve) => {
+            const url = `https://store.steampowered.com/api/appdetails?appids=${appId}`;
+
+            https.get(url, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    try {
+                        const result = JSON.parse(data);
+                        if (result[appId] && result[appId].success) {
+                            resolve({
+                                name: result[appId].data.name,
+                                type: result[appId].data.type
+                            });
+                        } else {
+                            resolve(null);
+                        }
+                    } catch (e) {
+                        console.log(`    ⚠️  Parse error: ${e.message}`);
+                        resolve(null);
+                    }
+                });
+            }).on('error', (e) => {
+                console.log(`    ⚠️  Request error: ${e.message}`);
+                resolve(null);
+            });
+        });
+    }
+
+    generateGameId(gameName) {
+        return gameName
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
+    }
+
     async checkImageExists(url) {
         return new Promise((resolve) => {
             https.get(url, { method: 'HEAD' }, (res) => {
                 resolve(res.statusCode === 200);
             }).on('error', () => resolve(false));
         });
+    }
+
+    async tryScreenshotFallback(appId, gameId) {
+        try {
+            // Try to get screenshots from Steam API
+            const screenshotUrls = [
+                `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/0000000001.1920x1080.jpg`,
+                `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/0000000000.1920x1080.jpg`,
+                `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/ss_1.1920x1080.jpg`,
+                `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/ss_0.1920x1080.jpg`
+            ];
+
+            for (const url of screenshotUrls) {
+                console.log(`  📸 Trying screenshot...`);
+                if (await this.checkImageExists(url)) {
+                    const gameId = this.generateGameId(game.name);
+                    const localPath = await this.downloadImage(url, gameId, 'screenshot.jpg');
+                    if (localPath) {
+                        console.log(`  💾 Used screenshot as cover: ${localPath}`);
+                        return localPath;
+                    }
+                }
+            }
+
+            return false;
+        } catch (error) {
+            console.log(`  ⚠️  Screenshot fallback failed: ${error.message}`);
+            return false;
+        }
     }
 
     async downloadImage(url, gameId, format) {

@@ -1,6 +1,5 @@
 [
   {
-    "id": "stardew-valley",
     "name": "Stardew Valley",
     "platform": "steam",
     "platformId": "413150",
@@ -11,7 +10,6 @@
     "coverImage": "assets/covers/stardew-valley.jpg"
   },
   {
-    "id": "streets-of-rogue",
     "name": "Streets of Rogue",
     "platform": "steam",
     "platformId": "512900",
@@ -22,17 +20,16 @@
     "coverImage": "assets/covers/streets-of-rogue.jpg"
   },
   {
-    "id": "mini-painter",
     "name": "Mini Painter",
     "platform": "steam",
     "platformId": "3694840",
     "totalAchievements": 16,
     "unlockedAchievements": 16,
     "dateCompleted": "2025-09",
-    "playedTime": 64
+    "playedTime": 64,
+    "coverImage": "assets/covers/mini-painter.jpg"
   },
   {
-    "id": "magic-archery",
     "name": "Magic Archery",
     "platform": "steam",
     "platformId": "2905170",
@@ -43,7 +40,6 @@
     "coverImage": "assets/covers/magic-archery.jpg"
   },
   {
-    "id": "101-cats-hidden",
     "name": "101 Cats Hidden",
     "platform": "steam",
     "platformId": "2775180",
@@ -52,5 +48,15 @@
     "dateCompleted": "2025-09",
     "playedTime": 1,
     "coverImage": "assets/covers/101-cats-hidden.jpg"
+  },
+  {
+    "name": "Rusty's Retirement",
+    "platform": "steam",
+    "platformId": "2666510",
+    "totalAchievements": 71,
+    "unlockedAchievements": 71,
+    "dateCompleted": "2025-10",
+    "playedTime": 159,
+    "coverImage": "assets/covers/rustys-retirement.jpg"
   }
 ]

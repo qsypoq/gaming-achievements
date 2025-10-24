@@ -28,7 +28,6 @@
     /* Text Colors */
     --text-primary: #c7d5e0;
     --text-secondary: #8f98a0;
-    --text-muted: #56626d;
     --text-white: #ffffff;
     
     /* Status Colors */
@@ -445,7 +444,7 @@ body {
 
 .completion-text {
     font-size: 0.75rem;
-    opacity: 0.85;
+    opacity: 0.9;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
     color: var(--text-secondary);
     line-height: 1.2;
@@ -454,9 +453,9 @@ body {
 
 .completion-date {
     font-size: 0.65rem;
-    opacity: 0.8;
+    opacity: 0.9;
     margin-top: 0.25rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
     line-height: 1.2;
     white-space: nowrap;
@@ -480,14 +479,15 @@ body {
 }
 
 .platform-icon {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     object-fit: contain;
+    display: block;
 }
 
-.game-platform.steam .platform-icon { filter: brightness(0) saturate(100%) invert(65%) sepia(15%) saturate(546%) hue-rotate(166deg) brightness(91%) contrast(89%); }
-.game-platform.gog .platform-icon { filter: brightness(0) saturate(100%) invert(62%) sepia(31%) saturate(739%) hue-rotate(216deg) brightness(95%) contrast(85%); }
-.game-platform.retroachievements { color: #ff8c42; }
+.game-platform.retroachievements { 
+    color: #ff8c42; 
+}
 
 .achievement-link {
     position: absolute;
@@ -604,7 +604,7 @@ body {
 .no-results i {
     font-size: 4rem;
     margin-bottom: var(--spacing-md);
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 /* Modal */
@@ -795,7 +795,7 @@ body {
 }
 
 /* Rarity indicators */
-.rarity-common { border-left: 3px solid var(--text-muted); }
+.rarity-common { border-left: 3px solid var(--text-secondary); }
 .rarity-uncommon { border-left: 3px solid var(--success); }
 .rarity-rare { border-left: 3px solid var(--warning); }
 .rarity-very-rare { border-left: 3px solid var(--accent-primary); }
