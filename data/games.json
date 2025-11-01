@@ -58,5 +58,32 @@
     "dateCompleted": "2025-10",
     "playedTime": 159,
     "coverImage": "assets/covers/rustys-retirement.jpg"
+  },
+  {
+    "name": "Mini Cozy Room: Lo-Fi",
+    "platform": "steam",
+    "platformId": "3511030",
+    "totalAchievements": 14,
+    "unlockedAchievements": 14,
+    "dateCompleted": "2025-10",
+    "playedTime": 100
+  },
+  {
+    "name": "Moonstone Island",
+    "platform": "steam",
+    "platformId": "1658150",
+    "totalAchievements": 59,
+    "unlockedAchievements": 59,
+    "dateCompleted": "2025-10",
+    "playedTime": 95
+  },
+  {
+    "name": "Village Tale",
+    "platform": "steam",
+    "platformId": "3447510",
+    "totalAchievements": 54,
+    "unlockedAchievements": 54,
+    "dateCompleted": "2025-11",
+    "playedTime": 27
   }
 ]
