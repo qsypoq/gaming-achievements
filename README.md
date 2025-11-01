@@ -14,7 +14,7 @@ A beautiful, responsive web dashboard to showcase your gaming achievements from 
 
 ## 🚀 Live Demo
 
-[View the live demo](https://qsypoq.github.io/achievements)
+[View the live demo](https://games.magnier.io)
 
 ## 📁 Project Structure
 
