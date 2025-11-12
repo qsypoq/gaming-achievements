@@ -6,8 +6,7 @@
     "totalAchievements": 49,
     "unlockedAchievements": 49,
     "dateCompleted": "2025-09",
-    "playedTime": 134,
-    "coverImage": "assets/covers/stardew-valley.jpg"
+    "playedTime": 134
   },
   {
     "name": "Streets of Rogue",
@@ -16,8 +15,7 @@
     "totalAchievements": 52,
     "unlockedAchievements": 52,
     "dateCompleted": "2025-10",
-    "playedTime": 38,
-    "coverImage": "assets/covers/streets-of-rogue.jpg"
+    "playedTime": 38
   },
   {
     "name": "Mini Painter",
@@ -26,8 +24,7 @@
     "totalAchievements": 16,
     "unlockedAchievements": 16,
     "dateCompleted": "2025-09",
-    "playedTime": 64,
-    "coverImage": "assets/covers/mini-painter.jpg"
+    "playedTime": 64
   },
   {
     "name": "Magic Archery",
@@ -36,8 +33,7 @@
     "totalAchievements": 7,
     "unlockedAchievements": 7,
     "dateCompleted": "2025-09",
-    "playedTime": 7,
-    "coverImage": "assets/covers/magic-archery.jpg"
+    "playedTime": 7
   },
   {
     "name": "101 Cats Hidden",
@@ -46,8 +42,7 @@
     "totalAchievements": 100,
     "unlockedAchievements": 100,
     "dateCompleted": "2025-09",
-    "playedTime": 1,
-    "coverImage": "assets/covers/101-cats-hidden.jpg"
+    "playedTime": 1
   },
   {
     "name": "Rusty's Retirement",
@@ -56,7 +51,41 @@
     "totalAchievements": 71,
     "unlockedAchievements": 71,
     "dateCompleted": "2025-10",
-    "playedTime": 159,
-    "coverImage": "assets/covers/rustys-retirement.jpg"
+    "playedTime": 159
+  },
+  {
+    "name": "Mini Cozy Room: Lo-Fi",
+    "platform": "steam",
+    "platformId": "3511030",
+    "totalAchievements": 14,
+    "unlockedAchievements": 14,
+    "dateCompleted": "2025-10",
+    "playedTime": 100
+  },
+  {
+    "name": "Moonstone Island",
+    "platform": "steam",
+    "platformId": "1658150",
+    "totalAchievements": 59,
+    "unlockedAchievements": 59,
+    "dateCompleted": "2025-10",
+    "playedTime": 95
+  },
+  {
+    "name": "Village Tale",
+    "platform": "steam",
+    "platformId": "3447510",
+    "totalAchievements": 54,
+    "unlockedAchievements": 54,
+    "dateCompleted": "2025-11",
+    "playedTime": 27
+  },
+  {
+    "platform": "steam",
+    "platformId": "3631290",
+    "totalAchievements": 12,
+    "unlockedAchievements": 12,
+    "dateCompleted": "2025-11",
+    "playedTime": 9
   }
 ]

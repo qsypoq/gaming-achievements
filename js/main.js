@@ -39,14 +39,18 @@ class AchievementDashboard {
                 throw new Error('Invalid or empty games data');
             }
             
-            // Load games data - names should already be populated by workflow
-            this.achievements = gamesData.map(game => {
+            // Load games data and fetch missing names
+            this.achievements = await Promise.all(gamesData.map(async (game) => {
+                const gameName = await this.fetchGameName(game);
+                const coverImage = this.generateCoverImagePath(game);
                 return {
                     ...game,
+                    name: gameName,
+                    coverImage: coverImage,
                     isCompleted: game.dateCompleted !== null,
                     lastPlayed: game.dateCompleted || new Date().toISOString().split('T')[0]
                 };
-            });
+            }));
 
             // Sort achievements
             this.achievements.sort((a, b) => {
@@ -67,7 +71,7 @@ class AchievementDashboard {
     }
 
     getGameLink(game) {
-        return gameName
+        return game.name
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-|-$/g, '');
@@ -81,6 +85,108 @@ class AchievementDashboard {
         } catch (error) {
             console.warn(`Could not load ${url}:`, error);
             return [];
+        }
+    }
+
+    generateCoverImagePath(game) {
+        // Generate standardized cover image paths
+        const coverPaths = {
+            steam: `assets/covers/steam/${game.platformId}.jpg`,
+            gog: `assets/covers/gog/${game.platformId}.jpg`,
+            retroachievements: `assets/covers/retroachievements/${game.platformId}.jpg`
+        };
+        
+        return coverPaths[game.platform] || null;
+    }
+
+    async fetchGameName(game) {
+        if (game.name && game.name.trim()) {
+            return game.name; // Already has a name
+        }
+
+        console.log(`Fetching name for game with platformId: ${game.platformId} on ${game.platform}`);
+        
+        try {
+            switch (game.platform) {
+                case 'steam':
+                    return await this.fetchSteamGameName(game.platformId);
+                case 'gog':
+                    return await this.fetchGogGameName(game.platformId);
+                case 'retroachievements':
+                    return await this.fetchRetroAchievementsGameName(game.platformId);
+                default:
+                    return `Unknown Game (${game.platformId})`;
+            }
+        } catch (error) {
+            console.error(`Failed to fetch name for ${game.platform} game ${game.platformId}:`, error);
+            return `Unknown Game (${game.platformId})`;
+        }
+    }
+
+    async fetchSteamGameName(appId) {
+        try {
+            // Using Steam Store API
+            const response = await fetch(`https://store.steampowered.com/api/appdetails?appids=${appId}`);
+            const data = await response.json();
+            
+            if (data[appId] && data[appId].success && data[appId].data) {
+                return data[appId].data.name;
+            }
+            throw new Error('Steam API returned no data');
+        } catch (error) {
+            console.warn(`Steam API failed for ${appId}, using fallback`);
+            // Fallback: try to scrape from Steam community page
+            try {
+                const response = await fetch(`https://steamcommunity.com/stats/${appId}/achievements`);
+                const html = await response.text();
+                const match = html.match(/<title>(.+?) Stats<\/title>/);
+                if (match) {
+                    return match[1].trim();
+                }
+            } catch (fallbackError) {
+                console.warn(`Steam fallback also failed for ${appId}`);
+            }
+            throw error;
+        }
+    }
+
+    async fetchGogGameName(gameId) {
+        try {
+            // GOG doesn't have a public API, but we can try to extract from the game page
+            const response = await fetch(`https://www.gog.com/game/${gameId}`);
+            const html = await response.text();
+            
+            // Try to extract title from meta tag or h1
+            let match = html.match(/<meta property="og:title" content="([^"]+)"/);
+            if (match) {
+                return match[1].trim();
+            }
+            
+            match = html.match(/<h1[^>]*>([^<]+)<\/h1>/);
+            if (match) {
+                return match[1].trim();
+            }
+            
+            throw new Error('Could not extract GOG game name');
+        } catch (error) {
+            console.warn(`GOG name fetch failed for ${gameId}`);
+            throw error;
+        }
+    }
+
+    async fetchRetroAchievementsGameName(gameId) {
+        try {
+            // RetroAchievements API
+            const response = await fetch(`https://retroachievements.org/API/API_GetGame.php?i=${gameId}`);
+            const data = await response.json();
+            
+            if (data && data.Title) {
+                return data.Title;
+            }
+            throw new Error('RetroAchievements API returned no data');
+        } catch (error) {
+            console.warn(`RetroAchievements API failed for ${gameId}`);
+            throw error;
         }
     }
 
@@ -338,7 +444,7 @@ class AchievementDashboard {
                     ${game.coverImage ? 
                         `<img src="${game.coverImage}" alt="${game.name}" class="game-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                          <div class="game-image-fallback" style="display: none;">${game.name}</div>` :
-                        `<div class="game-image">${game.name}</div>`
+                        `<div class="game-image-fallback">${game.name}</div>`
                     }
                     <div class="game-platform ${game.platform}">
                         ${game.platform === 'steam' ? '<img src="assets/icons/steam.svg" alt="Steam" class="platform-icon">' : 

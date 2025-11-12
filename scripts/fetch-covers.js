@@ -57,10 +57,22 @@ class CoverFetcher {
     }
 
     ensureCoversDirectory() {
+        // Create main covers directory
         if (!fs.existsSync(COVERS_DIR)) {
             fs.mkdirSync(COVERS_DIR, { recursive: true });
             console.log(`📁 Created covers directory: ${COVERS_DIR}\n`);
         }
+        
+        // Create platform-specific directories
+        const platforms = ['steam', 'gog', 'retroachievements'];
+        platforms.forEach(platform => {
+            const platformDir = path.join(COVERS_DIR, platform);
+            if (!fs.existsSync(platformDir)) {
+                fs.mkdirSync(platformDir, { recursive: true });
+                console.log(`📁 Created platform directory: ${platformDir}`);
+            }
+        });
+        console.log();
     }
 
     async run() {
@@ -162,9 +174,8 @@ class CoverFetcher {
                     console.log(`  🖼️  Testing: ${format} (${cdnBase.includes('akamai') ? 'akamai' : cdnBase.includes('cloudflare') ? 'cloudflare' : 'legacy'})`);
 
                     if (await this.checkImageExists(imageUrl)) {
-                        // Download the image locally using generated ID from game name
-                        const gameId = this.generateGameId(game.name);
-                        const localPath = await this.downloadImage(imageUrl, gameId, format);
+                        // Download the image locally using platformId and platform structure
+                        const localPath = await this.downloadImage(imageUrl, game.platform, game.platformId, format);
                         if (localPath) {
                             game.coverImage = localPath;
                             console.log(`  💾 Downloaded to: ${localPath}`);
@@ -176,7 +187,7 @@ class CoverFetcher {
 
             // Last resort: try to get any screenshot from the game
             console.log(`  🔄 Trying screenshots as last resort...`);
-            const screenshotPath = await this.tryScreenshotFallback(appId, game.id);
+            const screenshotPath = await this.tryScreenshotFallback(appId, game);
             if (screenshotPath) {
                 game.coverImage = screenshotPath;
                 return true;
@@ -285,7 +296,7 @@ class CoverFetcher {
         });
     }
 
-    async tryScreenshotFallback(appId, gameId) {
+    async tryScreenshotFallback(appId, game) {
         try {
             // Try to get screenshots from Steam API
             const screenshotUrls = [
@@ -298,8 +309,7 @@ class CoverFetcher {
             for (const url of screenshotUrls) {
                 console.log(`  📸 Trying screenshot...`);
                 if (await this.checkImageExists(url)) {
-                    const gameId = this.generateGameId(game.name);
-                    const localPath = await this.downloadImage(url, gameId, 'screenshot.jpg');
+                    const localPath = await this.downloadImage(url, game.platform, game.platformId, 'screenshot.jpg');
                     if (localPath) {
                         console.log(`  💾 Used screenshot as cover: ${localPath}`);
                         return localPath;
@@ -314,12 +324,13 @@ class CoverFetcher {
         }
     }
 
-    async downloadImage(url, gameId, format) {
+    async downloadImage(url, platform, platformId, format) {
         return new Promise((resolve) => {
             const ext = path.extname(format);
-            const filename = `${gameId}${ext}`;
-            const localPath = path.join(COVERS_DIR, filename);
-            const relativePath = `assets/covers/${filename}`;
+            const filename = `${platformId}${ext}`;
+            const platformDir = path.join(COVERS_DIR, platform);
+            const localPath = path.join(platformDir, filename);
+            const relativePath = `assets/covers/${platform}/${filename}`;
 
             // Skip if already exists
             if (fs.existsSync(localPath)) {
