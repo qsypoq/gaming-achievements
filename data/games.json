@@ -6,7 +6,8 @@
     "totalAchievements": 49,
     "unlockedAchievements": 49,
     "dateCompleted": "2025-09",
-    "playedTime": 134
+    "playedTime": 134,
+    "coverImage": "assets/covers/steam/413150.jpg"
   },
   {
     "name": "Streets of Rogue",
@@ -15,7 +16,8 @@
     "totalAchievements": 52,
     "unlockedAchievements": 52,
     "dateCompleted": "2025-10",
-    "playedTime": 38
+    "playedTime": 38,
+    "coverImage": "assets/covers/steam/512900.jpg"
   },
   {
     "name": "Mini Painter",
@@ -24,7 +26,8 @@
     "totalAchievements": 16,
     "unlockedAchievements": 16,
     "dateCompleted": "2025-09",
-    "playedTime": 64
+    "playedTime": 64,
+    "coverImage": "assets/covers/steam/3694840.jpg"
   },
   {
     "name": "Magic Archery",
@@ -33,7 +36,8 @@
     "totalAchievements": 7,
     "unlockedAchievements": 7,
     "dateCompleted": "2025-09",
-    "playedTime": 7
+    "playedTime": 7,
+    "coverImage": "assets/covers/steam/2905170.jpg"
   },
   {
     "name": "101 Cats Hidden",
@@ -42,7 +46,8 @@
     "totalAchievements": 100,
     "unlockedAchievements": 100,
     "dateCompleted": "2025-09",
-    "playedTime": 1
+    "playedTime": 1,
+    "coverImage": "assets/covers/steam/2775180.jpg"
   },
   {
     "name": "Rusty's Retirement",
@@ -51,7 +56,8 @@
     "totalAchievements": 71,
     "unlockedAchievements": 71,
     "dateCompleted": "2025-10",
-    "playedTime": 159
+    "playedTime": 159,
+    "coverImage": "assets/covers/steam/2666510.jpg"
   },
   {
     "name": "Mini Cozy Room: Lo-Fi",
@@ -60,7 +66,8 @@
     "totalAchievements": 14,
     "unlockedAchievements": 14,
     "dateCompleted": "2025-10",
-    "playedTime": 100
+    "playedTime": 100,
+    "coverImage": "assets/covers/steam/3511030.jpg"
   },
   {
     "name": "Moonstone Island",
@@ -69,7 +76,8 @@
     "totalAchievements": 59,
     "unlockedAchievements": 59,
     "dateCompleted": "2025-10",
-    "playedTime": 95
+    "playedTime": 95,
+    "coverImage": "assets/covers/steam/1658150.jpg"
   },
   {
     "name": "Village Tale",
@@ -78,7 +86,8 @@
     "totalAchievements": 54,
     "unlockedAchievements": 54,
     "dateCompleted": "2025-11",
-    "playedTime": 27
+    "playedTime": 27,
+    "coverImage": "assets/covers/steam/3447510.jpg"
   },
   {
     "platform": "steam",
@@ -86,6 +95,7 @@
     "totalAchievements": 12,
     "unlockedAchievements": 12,
     "dateCompleted": "2025-11",
-    "playedTime": 9
+    "playedTime": 9,
+    "coverImage": "assets/covers/steam/3631290.jpg"
   }
 ]
