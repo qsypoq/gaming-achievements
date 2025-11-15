@@ -1,17 +1,18 @@
 #!/usr/bin/env node
 
 /**
- * Game Cover Fetcher Script
- * Automatically fetches cover images for games in data/games.json
+ * Game Cover & Name Fetcher Script
+ * Automatically fetches game names and cover images for games in data/games.json
  * 
  * Usage:
  *   node scripts/fetch-covers.js
  * 
  * Features:
+ * - Fetches missing game names from Steam and RetroAchievements APIs
  * - Fetches Steam covers automatically using Steam Store API
  * - Supports multiple Steam image formats (library, header)
  * - Validates image URLs before adding them
- * - Preserves existing covers
+ * - Preserves existing names and covers
  * - Provides detailed logging
  */
 
@@ -77,11 +78,11 @@ class CoverFetcher {
 
     async run() {
         try {
-            console.log('🎮 Game Cover Fetcher v1.0');
-            console.log('================================\n');
+            console.log('🎮 Game Cover & Name Fetcher v1.1');
+            console.log('====================================\n');
 
             this.loadGamesData();
-            await this.fetchAllCovers();
+            await this.fetchAllMissingData();
             this.saveGamesData();
             this.printSummary();
 
@@ -101,29 +102,121 @@ class CoverFetcher {
         }
     }
 
-    async fetchAllCovers() {
-        console.log('🔍 Starting cover image fetch...\n');
+    async fetchAllMissingData() {
+        console.log('🔍 Starting data fetch (names and covers)...\n');
 
         for (let i = 0; i < this.gamesData.length; i++) {
             const game = this.gamesData[i];
-            console.log(`[${i + 1}/${this.gamesData.length}] ${game.name}`);
+            const displayName = game.name || `${game.platform} game ${game.platformId}`;
+            console.log(`[${i + 1}/${this.gamesData.length}] ${displayName}`);
 
-            if (game.coverImage) {
-                console.log(`  ✅ Already has cover\n`);
-                continue;
+            let needsUpdate = false;
+
+            // Fetch missing name
+            if (!game.name) {
+                console.log(`  📝 Fetching game name...`);
+                const name = await this.fetchGameName(game);
+                if (name) {
+                    game.name = name;
+                    this.updated = true;
+                    needsUpdate = true;
+                    console.log(`  ✅ Name added: ${name}`);
+                } else {
+                    console.log(`  ❌ Could not fetch name`);
+                }
             }
 
-            const success = await this.fetchGameCover(game);
-            if (success) {
-                this.updated = true;
-                console.log(`  ✅ Cover added!\n`);
-            } else {
-                console.log(`  ❌ No cover found\n`);
+            // Fetch missing cover
+            if (!game.coverImage) {
+                console.log(`  🖼️  Fetching cover image...`);
+                const success = await this.fetchGameCover(game);
+                if (success) {
+                    this.updated = true;
+                    needsUpdate = true;
+                    console.log(`  ✅ Cover added!`);
+                } else {
+                    console.log(`  ❌ No cover found`);
+                }
+            } else if (!needsUpdate) {
+                console.log(`  ✅ Already complete`);
             }
+
+            console.log();
 
             // Be respectful to APIs
             await this.delay(300);
         }
+    }
+
+    async fetchGameName(game) {
+        switch (game.platform) {
+            case 'steam':
+                return await this.fetchSteamGameName(game.platformId);
+            case 'gog':
+                console.log(`    ⚠️  GOG - manual name needed`);
+                return null;
+            case 'retroachievements':
+                return await this.fetchRetroAchievementsGameName(game.platformId);
+            default:
+                console.log(`    ⚠️  Unknown platform: ${game.platform}`);
+                return null;
+        }
+    }
+
+    async fetchSteamGameName(appId) {
+        return new Promise((resolve) => {
+            const url = `https://store.steampowered.com/api/appdetails?appids=${appId}`;
+
+            https.get(url, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    try {
+                        const result = JSON.parse(data);
+                        if (result[appId] && result[appId].success && result[appId].data) {
+                            resolve(result[appId].data.name);
+                        } else {
+                            console.log(`    ⚠️  Steam API returned no data for ${appId}`);
+                            resolve(null);
+                        }
+                    } catch (e) {
+                        console.log(`    ⚠️  Parse error: ${e.message}`);
+                        resolve(null);
+                    }
+                });
+            }).on('error', (e) => {
+                console.log(`    ⚠️  Request error: ${e.message}`);
+                resolve(null);
+            });
+        });
+    }
+
+    async fetchRetroAchievementsGameName(gameId) {
+        return new Promise((resolve) => {
+            const url = `https://retroachievements.org/API/API_GetGame.php?i=${gameId}`;
+
+            https.get(url, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    try {
+                        const result = JSON.parse(data);
+                        if (result && result.Title) {
+                            resolve(result.Title);
+                        } else {
+                            console.log(`    ⚠️  RetroAchievements API returned no data for ${gameId}`);
+                            resolve(null);
+                        }
+                    } catch (e) {
+                        console.log(`    ⚠️  Parse error: ${e.message}`);
+                        resolve(null);
+                    }
+                });
+            }).on('error', (e) => {
+                console.log(`    ⚠️  Request error: ${e.message}`);
+                resolve(null);
+            });
+        });
     }
 
     async fetchGameCover(game) {
@@ -131,13 +224,13 @@ class CoverFetcher {
             case 'steam':
                 return await this.fetchSteamCover(game);
             case 'gog':
-                console.log(`  📝 GOG - manual cover needed`);
+                console.log(`    📝 GOG - manual cover needed`);
                 return false;
             case 'retroachievements':
-                console.log(`  📝 RetroAchievements - manual cover needed`);
+                console.log(`    📝 RetroAchievements - manual cover needed`);
                 return false;
             default:
-                console.log(`  ❓ Unknown platform: ${game.platform}`);
+                console.log(`    ❓ Unknown platform: ${game.platform}`);
                 return false;
         }
     }
@@ -377,24 +470,35 @@ class CoverFetcher {
         console.log('==========');
         
         const total = this.gamesData.length;
+        const withNames = this.gamesData.filter(g => g.name).length;
+        const withoutNames = total - withNames;
         const withCovers = this.gamesData.filter(g => g.coverImage).length;
         const withoutCovers = total - withCovers;
 
         console.log(`Total games: ${total}`);
+        console.log(`With names: ${withNames}`);
+        console.log(`Without names: ${withoutNames}`);
         console.log(`With covers: ${withCovers}`);
         console.log(`Without covers: ${withoutCovers}`);
         
         if (this.updated) {
-            console.log('\n✅ Cover images updated successfully!');
+            console.log('\n✅ Game data updated successfully!');
         } else {
-            console.log('\n📋 No new covers added');
+            console.log('\n📋 No updates needed');
+        }
+
+        if (withoutNames > 0) {
+            console.log('\n📝 Manual names needed for:');
+            this.gamesData
+                .filter(g => !g.name)
+                .forEach(g => console.log(`  - ${g.platform} game ${g.platformId}`));
         }
 
         if (withoutCovers > 0) {
-            console.log('\n📝 Manual covers needed for:');
+            console.log('\n🖼️  Manual covers needed for:');
             this.gamesData
                 .filter(g => !g.coverImage)
-                .forEach(g => console.log(`  - ${g.name} (${g.platform})`));
+                .forEach(g => console.log(`  - ${g.name || g.platformId} (${g.platform})`));
         }
     }
 
