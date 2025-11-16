@@ -6,7 +6,7 @@
     "totalAchievements": 49,
     "unlockedAchievements": 49,
     "dateCompleted": "2025-09",
-    "playedTime": 134,
+    "playedTime": 141,
     "coverImage": "assets/covers/steam/413150.jpg"
   },
   {
@@ -98,5 +98,13 @@
     "playedTime": 9,
     "coverImage": "assets/covers/steam/3631290.jpg",
     "name": "Slots & Daggers"
+  },
+  {
+    "platform": "steam",
+    "platformId": "2451100",
+    "totalAchievements": 26,
+    "unlockedAchievements": 26,
+    "dateCompleted": "2025-11",
+    "playedTime": 65
   }
 ]
