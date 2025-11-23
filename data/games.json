@@ -108,5 +108,13 @@
     "playedTime": 65,
     "name": "Little Rocket Lab",
     "coverImage": "assets/covers/steam/2451100.jpg"
+  },
+  {
+    "platform": "steam",
+    "platformId": "521150",
+    "totalAchievements": 53,
+    "unlockedAchievements": 53,
+    "dateCompleted": "2025-11",
+    "playedTime": 35
   }
 ]
