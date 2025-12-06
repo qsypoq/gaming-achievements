@@ -2,10 +2,11 @@
 
 /**
  * Game Cover & Name Fetcher Script
- * Automatically fetches game names and cover images for games in data/games.json
+ * Automatically fetches game names and cover images for games in platform-specific data files
  * 
  * Usage:
- *   node scripts/fetch-covers.js
+ *   node scripts/fetch-covers.js          # Fetch missing only
+ *   node scripts/fetch-covers.js --force  # Re-download all covers
  * 
  * Features:
  * - Fetches missing game names from Steam and RetroAchievements APIs
@@ -13,6 +14,7 @@
  * - Supports multiple Steam image formats (library, header)
  * - Validates image URLs before adding them
  * - Preserves existing names and covers
+ * - Works with separate platform files (steam.json, gog.json, retroachievements.json)
  * - Provides detailed logging
  */
 
@@ -20,40 +22,31 @@ const fs = require('fs');
 const https = require('https');
 const path = require('path');
 
+// Parse command line arguments
+const FORCE_REFRESH = process.argv.includes('--force') || process.argv.includes('-f');
+
 // Configuration
 const STEAM_SEARCH_API = 'https://store.steampowered.com/api/storesearch/';
 const STEAM_CDN_BASE = 'https://cdn.akamai.steamstatic.com/steam/apps/';
 const COVERS_DIR = path.join(process.cwd(), 'assets', 'covers');
 
-// Steam image formats (in order of preference) - comprehensive list
+// Steam image formats (in order of preference)
 const STEAM_IMAGE_FORMATS = [
-    // Primary vertical formats (preferred)
-    'library_600x900_2x.jpg',      // Best quality vertical (1200x1800)
-    'library_600x900.jpg',          // Standard vertical (600x900)
-    'library_hero.jpg',             // Hero image (3840x1240)
-    'library_hero_blur.jpg',        // Blurred hero image
-    
-    // Alternative vertical formats
-    'portrait.jpg',                 // Portrait format
-    'logo.png',                     // Game logo
-    
-    // Horizontal formats (fallbacks)
-    'header.jpg',                   // Standard header (460x215)
-    'header_292x136.jpg',          // Small header
-    'capsule_616x353.jpg',         // Large capsule
-    'capsule_467x181.jpg',         // Medium capsule
-    'capsule_184x69.jpg',          // Small capsule
-    
-    // Store page images (last resort)
-    'page_bg_generated_v6b.jpg',   // Generated background
-    'page_bg_generated.jpg',       // Generated background (older)
-    'ss_initial.jpg'               // Screenshot fallback
+    'header.jpg',                   // Standard header (460x215) - preferred
 ];
 
 class CoverFetcher {
     constructor() {
-        this.gamesData = [];
-        this.updated = false;
+        this.platformData = {
+            steam: [],
+            gog: [],
+            retroachievements: []
+        };
+        this.updated = {
+            steam: false,
+            gog: false,
+            retroachievements: false
+        };
         this.ensureCoversDirectory();
     }
 
@@ -94,9 +87,22 @@ class CoverFetcher {
 
     loadGamesData() {
         try {
-            const dataPath = path.join(process.cwd(), 'data', 'games.json');
-            this.gamesData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-            console.log(`📋 Loaded ${this.gamesData.length} games from data/games.json\n`);
+            const platforms = ['steam', 'gog', 'retroachievements'];
+            let totalGames = 0;
+            
+            platforms.forEach(platform => {
+                const dataPath = path.join(process.cwd(), 'data', `${platform}.json`);
+                if (fs.existsSync(dataPath)) {
+                    this.platformData[platform] = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+                    totalGames += this.platformData[platform].length;
+                    console.log(`📋 Loaded ${this.platformData[platform].length} ${platform} games`);
+                } else {
+                    console.log(`⚠️  No ${platform}.json found, creating empty file`);
+                    this.platformData[platform] = [];
+                }
+            });
+            
+            console.log(`📋 Total: ${totalGames} games across all platforms\n`);
         } catch (error) {
             throw new Error(`Failed to load games data: ${error.message}`);
         }
@@ -105,51 +111,62 @@ class CoverFetcher {
     async fetchAllMissingData() {
         console.log('🔍 Starting data fetch (names and covers)...\n');
 
-        for (let i = 0; i < this.gamesData.length; i++) {
-            const game = this.gamesData[i];
-            const displayName = game.name || `${game.platform} game ${game.platformId}`;
-            console.log(`[${i + 1}/${this.gamesData.length}] ${displayName}`);
+        for (const platform of Object.keys(this.platformData)) {
+            const games = this.platformData[platform];
+            if (games.length === 0) continue;
+            
+            console.log(`\n=== Processing ${platform.toUpperCase()} (${games.length} games) ===\n`);
+            
+            for (let i = 0; i < games.length; i++) {
+                const game = games[i];
+                const displayName = game.name || `${platform} game ${game.platformId}`;
+                console.log(`[${i + 1}/${games.length}] ${displayName}`);
 
-            let needsUpdate = false;
+                let needsUpdate = false;
 
-            // Fetch missing name
-            if (!game.name) {
-                console.log(`  📝 Fetching game name...`);
-                const name = await this.fetchGameName(game);
-                if (name) {
-                    game.name = name;
-                    this.updated = true;
-                    needsUpdate = true;
-                    console.log(`  ✅ Name added: ${name}`);
-                } else {
-                    console.log(`  ❌ Could not fetch name`);
+                // Fetch missing name
+                if (!game.name) {
+                    console.log(`  📝 Fetching game name...`);
+                    const name = await this.fetchGameName(game, platform);
+                    if (name) {
+                        game.name = name;
+                        this.updated[platform] = true;
+                        needsUpdate = true;
+                        console.log(`  ✅ Name added: ${name}`);
+                    } else {
+                        console.log(`  ❌ Could not fetch name`);
+                    }
                 }
-            }
 
-            // Fetch missing cover
-            if (!game.coverImage) {
-                console.log(`  🖼️  Fetching cover image...`);
-                const success = await this.fetchGameCover(game);
-                if (success) {
-                    this.updated = true;
-                    needsUpdate = true;
-                    console.log(`  ✅ Cover added!`);
-                } else {
-                    console.log(`  ❌ No cover found`);
+                // Fetch missing cover (or all covers if --force)
+                if (!game.coverImage || FORCE_REFRESH) {
+                    if (FORCE_REFRESH && game.coverImage) {
+                        console.log(`  🔄 Force refreshing cover...`);
+                    } else {
+                        console.log(`  🖼️  Fetching cover image...`);
+                    }
+                    const success = await this.fetchGameCover(game, platform);
+                    if (success) {
+                        this.updated[platform] = true;
+                        needsUpdate = true;
+                        console.log(`  ✅ Cover added!`);
+                    } else {
+                        console.log(`  ❌ No cover found`);
+                    }
+                } else if (!needsUpdate) {
+                    console.log(`  ✅ Already complete`);
                 }
-            } else if (!needsUpdate) {
-                console.log(`  ✅ Already complete`);
+
+                console.log();
+
+                // Be respectful to APIs
+                await this.delay(300);
             }
-
-            console.log();
-
-            // Be respectful to APIs
-            await this.delay(300);
         }
     }
 
-    async fetchGameName(game) {
-        switch (game.platform) {
+    async fetchGameName(game, platform) {
+        switch (platform) {
             case 'steam':
                 return await this.fetchSteamGameName(game.platformId);
             case 'gog':
@@ -158,7 +175,7 @@ class CoverFetcher {
             case 'retroachievements':
                 return await this.fetchRetroAchievementsGameName(game.platformId);
             default:
-                console.log(`    ⚠️  Unknown platform: ${game.platform}`);
+                console.log(`    ⚠️  Unknown platform: ${platform}`);
                 return null;
         }
     }
@@ -219,23 +236,86 @@ class CoverFetcher {
         });
     }
 
-    async fetchGameCover(game) {
-        switch (game.platform) {
+    async fetchGameCover(game, platform) {
+        switch (platform) {
             case 'steam':
-                return await this.fetchSteamCover(game);
+                return await this.fetchSteamCover(game, platform);
             case 'gog':
                 console.log(`    📝 GOG - manual cover needed`);
                 return false;
             case 'retroachievements':
-                console.log(`    📝 RetroAchievements - manual cover needed`);
-                return false;
+                return await this.fetchRetroAchievementsCover(game, platform);
             default:
-                console.log(`    ❓ Unknown platform: ${game.platform}`);
+                console.log(`    ❓ Unknown platform: ${platform}`);
                 return false;
         }
     }
 
-    async fetchSteamCover(game) {
+    async fetchRetroAchievementsCover(game, platform) {
+        try {
+            const gameId = game.platformId;
+            console.log(`  🔍 Fetching game icon from RetroAchievements...`);
+            
+            // Scrape the game page to find the game icon (mastery badge)
+            const iconUrl = await this.discoverRetroAchievementsIcon(gameId);
+            
+            if (iconUrl) {
+                console.log(`  🖼️  Found icon: ${iconUrl}`);
+                const localPath = await this.downloadImage(iconUrl, platform, game.platformId, 'icon.png');
+                if (localPath) {
+                    game.coverImage = localPath;
+                    console.log(`  💾 Downloaded to: ${localPath}`);
+                    return true;
+                }
+            }
+            
+            console.log(`  ❌ No icon found for game ${gameId}`);
+            return false;
+        } catch (error) {
+            console.log(`  ❌ Error: ${error.message}`);
+            return false;
+        }
+    }
+
+    async discoverRetroAchievementsIcon(gameId) {
+        return new Promise((resolve) => {
+            const url = `https://retroachievements.org/game/${gameId}`;
+            
+            https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    try {
+                        // Look for the game icon image with "Game Icon" alt text
+                        const iconPatterns = [
+                            /src="(https:\/\/media\.retroachievements\.org\/Images\/\d+\.png)"[^>]*alt="Game Icon"/i,
+                            /alt="Game Icon"[^>]*src="(https:\/\/media\.retroachievements\.org\/Images\/\d+\.png)"/i,
+                            /src="(\/Images\/\d+\.png)"[^>]*alt="Game Icon"/i,
+                            /alt="Game Icon"[^>]*src="(\/Images\/\d+\.png)"/i
+                        ];
+                        
+                        for (const pattern of iconPatterns) {
+                            const match = data.match(pattern);
+                            if (match) {
+                                let iconUrl = match[1];
+                                if (iconUrl.startsWith('/')) {
+                                    iconUrl = `https://media.retroachievements.org${iconUrl}`;
+                                }
+                                resolve(iconUrl);
+                                return;
+                            }
+                        }
+                        
+                        resolve(null);
+                    } catch (e) {
+                        resolve(null);
+                    }
+                });
+            }).on('error', () => resolve(null));
+        });
+    }
+
+    async fetchSteamCover(game, platform) {
         try {
             // Try to get App ID from platformId first, then link, then search
             let appId = game.platformId || this.extractSteamAppId(game.link);
@@ -254,7 +334,7 @@ class CoverFetcher {
                 }
             }
 
-            // Try different image formats and CDN endpoints
+            // Try standard CDN endpoints first
             const cdnEndpoints = [
                 'https://cdn.akamai.steamstatic.com/steam/apps/',
                 'https://cdn.cloudflare.steamstatic.com/steam/apps/',
@@ -264,11 +344,12 @@ class CoverFetcher {
             for (const format of STEAM_IMAGE_FORMATS) {
                 for (const cdnBase of cdnEndpoints) {
                     const imageUrl = `${cdnBase}${appId}/${format}`;
-                    console.log(`  🖼️  Testing: ${format} (${cdnBase.includes('akamai') ? 'akamai' : cdnBase.includes('cloudflare') ? 'cloudflare' : 'legacy'})`);
+                    const cdnName = cdnBase.includes('akamai') ? 'akamai' : 
+                                    cdnBase.includes('cloudflare') ? 'cloudflare' : 'legacy';
+                    console.log(`  🖼️  Testing: ${format} (${cdnName})`);
 
                     if (await this.checkImageExists(imageUrl)) {
-                        // Download the image locally using platformId and platform structure
-                        const localPath = await this.downloadImage(imageUrl, game.platform, game.platformId, format);
+                        const localPath = await this.downloadImage(imageUrl, platform, game.platformId, format);
                         if (localPath) {
                             game.coverImage = localPath;
                             console.log(`  💾 Downloaded to: ${localPath}`);
@@ -278,9 +359,22 @@ class CoverFetcher {
                 }
             }
 
+            // Try Fastly CDN with hash discovery (new Steam CDN format)
+            console.log(`  🔄 Trying Fastly CDN...`);
+            const fastlyUrl = await this.discoverFastlyUrl(appId);
+            if (fastlyUrl) {
+                console.log(`  🖼️  Testing: header.jpg (fastly)`);
+                const localPath = await this.downloadImage(fastlyUrl, platform, game.platformId, 'header.jpg');
+                if (localPath) {
+                    game.coverImage = localPath;
+                    console.log(`  💾 Downloaded to: ${localPath}`);
+                    return true;
+                }
+            }
+
             // Last resort: try to get any screenshot from the game
             console.log(`  🔄 Trying screenshots as last resort...`);
-            const screenshotPath = await this.tryScreenshotFallback(appId, game);
+            const screenshotPath = await this.tryScreenshotFallback(appId, game, platform);
             if (screenshotPath) {
                 game.coverImage = screenshotPath;
                 return true;
@@ -293,6 +387,32 @@ class CoverFetcher {
             console.log(`  ❌ Error: ${error.message}`);
             return false;
         }
+    }
+
+    async discoverFastlyUrl(appId) {
+        // Fetch the Steam store page to find the Fastly CDN hash
+        return new Promise((resolve) => {
+            const url = `https://store.steampowered.com/app/${appId}/`;
+            
+            https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    try {
+                        // Look for Fastly CDN URLs in the page
+                        const fastlyPattern = /https:\/\/shared\.fastly\.steamstatic\.com\/store_item_assets\/steam\/apps\/\d+\/([a-f0-9]+)\/header\.jpg/;
+                        const match = data.match(fastlyPattern);
+                        if (match) {
+                            resolve(`https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${appId}/${match[1]}/header.jpg`);
+                        } else {
+                            resolve(null);
+                        }
+                    } catch (e) {
+                        resolve(null);
+                    }
+                });
+            }).on('error', () => resolve(null));
+        });
     }
 
     extractSteamAppId(link) {
@@ -389,7 +509,7 @@ class CoverFetcher {
         });
     }
 
-    async tryScreenshotFallback(appId, game) {
+    async tryScreenshotFallback(appId, game, platform) {
         try {
             // Try to get screenshots from Steam API
             const screenshotUrls = [
@@ -402,7 +522,7 @@ class CoverFetcher {
             for (const url of screenshotUrls) {
                 console.log(`  📸 Trying screenshot...`);
                 if (await this.checkImageExists(url)) {
-                    const localPath = await this.downloadImage(url, game.platform, game.platformId, 'screenshot.jpg');
+                    const localPath = await this.downloadImage(url, platform, game.platformId, 'screenshot.jpg');
                     if (localPath) {
                         console.log(`  💾 Used screenshot as cover: ${localPath}`);
                         return localPath;
@@ -425,11 +545,16 @@ class CoverFetcher {
             const localPath = path.join(platformDir, filename);
             const relativePath = `assets/covers/${platform}/${filename}`;
 
-            // Skip if already exists
-            if (fs.existsSync(localPath)) {
+            // Skip if already exists (unless force refresh)
+            if (fs.existsSync(localPath) && !FORCE_REFRESH) {
                 console.log(`  ♻️  Already downloaded`);
                 resolve(relativePath);
                 return;
+            }
+            
+            // Delete existing file if force refresh
+            if (fs.existsSync(localPath) && FORCE_REFRESH) {
+                fs.unlinkSync(localPath);
             }
 
             const file = fs.createWriteStream(localPath);
@@ -458,47 +583,75 @@ class CoverFetcher {
     }
 
     saveGamesData() {
-        if (this.updated) {
-            const dataPath = path.join(process.cwd(), 'data', 'games.json');
-            fs.writeFileSync(dataPath, JSON.stringify(this.gamesData, null, 2));
-            console.log('💾 Saved updated games.json\n');
+        let anyUpdated = false;
+        
+        for (const platform of Object.keys(this.platformData)) {
+            if (this.updated[platform]) {
+                const dataPath = path.join(process.cwd(), 'data', `${platform}.json`);
+                fs.writeFileSync(dataPath, JSON.stringify(this.platformData[platform], null, 2));
+                console.log(`💾 Saved updated ${platform}.json`);
+                anyUpdated = true;
+            }
+        }
+        
+        if (anyUpdated) {
+            console.log();
         }
     }
 
     printSummary() {
         console.log('📊 Summary');
-        console.log('==========');
+        console.log('==========\n');
         
-        const total = this.gamesData.length;
-        const withNames = this.gamesData.filter(g => g.name).length;
-        const withoutNames = total - withNames;
-        const withCovers = this.gamesData.filter(g => g.coverImage).length;
-        const withoutCovers = total - withCovers;
-
-        console.log(`Total games: ${total}`);
-        console.log(`With names: ${withNames}`);
-        console.log(`Without names: ${withoutNames}`);
-        console.log(`With covers: ${withCovers}`);
-        console.log(`Without covers: ${withoutCovers}`);
+        let total = 0;
+        let withNames = 0;
+        let withCovers = 0;
         
-        if (this.updated) {
+        for (const platform of Object.keys(this.platformData)) {
+            const games = this.platformData[platform];
+            const platformTotal = games.length;
+            const platformWithNames = games.filter(g => g.name).length;
+            const platformWithCovers = games.filter(g => g.coverImage).length;
+            
+            total += platformTotal;
+            withNames += platformWithNames;
+            withCovers += platformWithCovers;
+            
+            if (platformTotal > 0) {
+                console.log(`${platform}:`);
+                console.log(`  Total: ${platformTotal}`);
+                console.log(`  With names: ${platformWithNames}/${platformTotal}`);
+                console.log(`  With covers: ${platformWithCovers}/${platformTotal}`);
+            }
+        }
+        
+        console.log(`\nTotal games: ${total}`);
+        console.log(`With names: ${withNames}/${total}`);
+        console.log(`With covers: ${withCovers}/${total}`);
+        
+        const anyUpdated = Object.values(this.updated).some(u => u);
+        if (anyUpdated) {
             console.log('\n✅ Game data updated successfully!');
         } else {
             console.log('\n📋 No updates needed');
         }
 
-        if (withoutNames > 0) {
-            console.log('\n📝 Manual names needed for:');
-            this.gamesData
-                .filter(g => !g.name)
-                .forEach(g => console.log(`  - ${g.platform} game ${g.platformId}`));
+        // List games without names
+        for (const platform of Object.keys(this.platformData)) {
+            const missingNames = this.platformData[platform].filter(g => !g.name);
+            if (missingNames.length > 0) {
+                console.log(`\n📝 Manual names needed for ${platform}:`);
+                missingNames.forEach(g => console.log(`  - ${g.platformId}`));
+            }
         }
 
-        if (withoutCovers > 0) {
-            console.log('\n🖼️  Manual covers needed for:');
-            this.gamesData
-                .filter(g => !g.coverImage)
-                .forEach(g => console.log(`  - ${g.name || g.platformId} (${g.platform})`));
+        // List games without covers
+        for (const platform of Object.keys(this.platformData)) {
+            const missingCovers = this.platformData[platform].filter(g => !g.coverImage);
+            if (missingCovers.length > 0) {
+                console.log(`\n🖼️  Manual covers needed for ${platform}:`);
+                missingCovers.forEach(g => console.log(`  - ${g.name || g.platformId}`));
+            }
         }
     }
 

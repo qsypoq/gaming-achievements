@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Personal gaming achievements dashboard tracking progress across Steam, GOG, and RetroAchievements">
     <title>Gaming Achievements Dashboard</title>
     <link rel="stylesheet" href="styles/main.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,25 +20,6 @@
             </h1>
             <p class="subtitle">Tracking progress across Steam, GOG & RetroAchievements</p>
         </header>
-
-        <nav class="platform-nav">
-            <button class="platform-btn active" data-platform="all">
-                <i class="fas fa-gamepad"></i>
-                All Platforms
-            </button>
-            <button class="platform-btn" data-platform="steam">
-                <i class="fab fa-steam"></i>
-                Steam
-            </button>
-            <button class="platform-btn" data-platform="gog">
-                <i class="fas fa-compact-disc"></i>
-                GOG
-            </button>
-            <button class="platform-btn" data-platform="retroachievements">
-                <i class="fas fa-medal"></i>
-                RetroAchievements
-            </button>
-        </nav>
 
         <div class="stats-grid">
             <div class="stat-card">
@@ -74,6 +56,22 @@
             <div class="filter-group">
                 <label for="search-input">Search:</label>
                 <input type="text" id="search-input" placeholder="Search games...">
+            </div>
+            <div class="filter-group">
+                <label for="platform-select">Platform:</label>
+                <select id="platform-select">
+                    <option value="all">All Platforms</option>
+                    <option value="steam">Steam</option>
+                    <option value="gog">GOG</option>
+                    <option value="retroachievements">RetroAchievements</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="tag-select">Tags:</label>
+                <select id="tag-select">
+                    <option value="all">All Tags</option>
+                    <!-- Tags will be dynamically populated -->
+                </select>
             </div>
             <div class="filter-group">
                 <label for="sort-select">Sort by:</label>
@@ -113,9 +111,9 @@
     </div>
 
     <footer class="footer">
-        <p>&copy; 2025 Gaming Achievements Dashboard. Data from Steam, GOG, and RetroAchievements.</p>
+        <p>&copy; Data from Steam, GOG, and RetroAchievements.</p>
         <div class="footer-links">
-            <a href="https://github.com" target="_blank">
+            <a href="https://https://github.com/qsypoq/gaming-achievements" target="_blank">
                 <i class="fab fa-github"></i>
                 GitHub
             </a>

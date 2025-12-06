@@ -7,6 +7,8 @@ class AchievementDashboard {
         this.currentSort = 'recent';
         this.currentRarity = 'all';
         this.searchQuery = '';
+        this.selectedTags = new Set();
+        this.allTags = new Set();
         
         // Call init but don't await in constructor
         this.init().catch(error => {
@@ -28,29 +30,49 @@ class AchievementDashboard {
 
     async loadAchievements() {
         try {
-            const response = await fetch('data/games.json');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            // Load data from separate platform files
+            const platforms = ['steam', 'gog', 'retroachievements'];
+            const allGames = [];
+            
+            for (const platform of platforms) {
+                try {
+                    const response = await fetch(`data/${platform}.json`);
+                    if (!response.ok) {
+                        console.warn(`Could not load ${platform}.json: ${response.status}`);
+                        continue;
+                    }
+                    
+                    const platformGames = await response.json();
+                    
+                    if (Array.isArray(platformGames)) {
+                        // Add platform info to each game
+                        platformGames.forEach(game => {
+                            allGames.push({
+                                ...game,
+                                platform: platform
+                            });
+                        });
+                    }
+                } catch (error) {
+                    console.warn(`Error loading ${platform}.json:`, error);
+                }
             }
             
-            const gamesData = await response.json();
-            
-            if (!Array.isArray(gamesData) || gamesData.length === 0) {
-                throw new Error('Invalid or empty games data');
+            if (allGames.length === 0) {
+                throw new Error('No games data found');
             }
             
-            // Load games data and fetch missing names
-            this.achievements = await Promise.all(gamesData.map(async (game) => {
-                const gameName = await this.fetchGameName(game);
-                const coverImage = this.generateCoverImagePath(game);
+            // Load games data - names should already be in platform files
+            this.achievements = allGames.map((game) => {
+                const coverImage = game.coverImage || this.generateCoverImagePath(game);
                 return {
                     ...game,
-                    name: gameName,
+                    name: game.name || `Unknown Game (${game.platformId})`,
                     coverImage: coverImage,
                     isCompleted: game.dateCompleted !== null,
                     lastPlayed: game.dateCompleted || new Date().toISOString().split('T')[0]
                 };
-            }));
+            });
 
             // Sort achievements
             this.achievements.sort((a, b) => {
@@ -63,6 +85,7 @@ class AchievementDashboard {
             });
             
             this.filteredAchievements = [...this.achievements];
+            this.extractAllTags();
         } catch (error) {
             console.error('Error loading achievements:', error);
             // Load sample data as fallback
@@ -70,23 +93,43 @@ class AchievementDashboard {
         }
     }
 
-    getGameLink(game) {
-        return game.name
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-|-$/g, '');
+    extractAllTags() {
+        this.allTags.clear();
+        this.achievements.forEach(game => {
+            if (game.tags && Array.isArray(game.tags)) {
+                game.tags.forEach(tag => this.allTags.add(tag));
+            }
+        });
+        this.renderTagFilters();
     }
 
-    async loadJSON(url) {
-        try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return await response.json();
-        } catch (error) {
-            console.warn(`Could not load ${url}:`, error);
-            return [];
+    renderTagFilters() {
+        const tagSelect = document.getElementById('tag-select');
+        if (!tagSelect) return;
+        
+        // Clear existing options except "All Tags"
+        tagSelect.innerHTML = '<option value="all">All Tags</option>';
+        
+        // Hide the dropdown if there are no tags
+        const filterGroup = tagSelect.closest('.filter-group');
+        if (this.allTags.size === 0) {
+            if (filterGroup) filterGroup.style.display = 'none';
+            return;
         }
+        
+        if (filterGroup) filterGroup.style.display = '';
+        
+        // Add tag options
+        const sortedTags = Array.from(this.allTags).sort();
+        sortedTags.forEach(tag => {
+            const option = document.createElement('option');
+            option.value = tag;
+            option.textContent = tag;
+            tagSelect.appendChild(option);
+        });
     }
+
+
 
     generateCoverImagePath(game) {
         // Generate standardized cover image paths
@@ -97,97 +140,6 @@ class AchievementDashboard {
         };
         
         return coverPaths[game.platform] || null;
-    }
-
-    async fetchGameName(game) {
-        if (game.name && game.name.trim()) {
-            return game.name; // Already has a name
-        }
-
-        console.log(`Fetching name for game with platformId: ${game.platformId} on ${game.platform}`);
-        
-        try {
-            switch (game.platform) {
-                case 'steam':
-                    return await this.fetchSteamGameName(game.platformId);
-                case 'gog':
-                    return await this.fetchGogGameName(game.platformId);
-                case 'retroachievements':
-                    return await this.fetchRetroAchievementsGameName(game.platformId);
-                default:
-                    return `Unknown Game (${game.platformId})`;
-            }
-        } catch (error) {
-            console.error(`Failed to fetch name for ${game.platform} game ${game.platformId}:`, error);
-            return `Unknown Game (${game.platformId})`;
-        }
-    }
-
-    async fetchSteamGameName(appId) {
-        try {
-            // Using Steam Store API
-            const response = await fetch(`https://store.steampowered.com/api/appdetails?appids=${appId}`);
-            const data = await response.json();
-            
-            if (data[appId] && data[appId].success && data[appId].data) {
-                return data[appId].data.name;
-            }
-            throw new Error('Steam API returned no data');
-        } catch (error) {
-            console.warn(`Steam API failed for ${appId}, using fallback`);
-            // Fallback: try to scrape from Steam community page
-            try {
-                const response = await fetch(`https://steamcommunity.com/stats/${appId}/achievements`);
-                const html = await response.text();
-                const match = html.match(/<title>(.+?) Stats<\/title>/);
-                if (match) {
-                    return match[1].trim();
-                }
-            } catch (fallbackError) {
-                console.warn(`Steam fallback also failed for ${appId}`);
-            }
-            throw error;
-        }
-    }
-
-    async fetchGogGameName(gameId) {
-        try {
-            // GOG doesn't have a public API, but we can try to extract from the game page
-            const response = await fetch(`https://www.gog.com/game/${gameId}`);
-            const html = await response.text();
-            
-            // Try to extract title from meta tag or h1
-            let match = html.match(/<meta property="og:title" content="([^"]+)"/);
-            if (match) {
-                return match[1].trim();
-            }
-            
-            match = html.match(/<h1[^>]*>([^<]+)<\/h1>/);
-            if (match) {
-                return match[1].trim();
-            }
-            
-            throw new Error('Could not extract GOG game name');
-        } catch (error) {
-            console.warn(`GOG name fetch failed for ${gameId}`);
-            throw error;
-        }
-    }
-
-    async fetchRetroAchievementsGameName(gameId) {
-        try {
-            // RetroAchievements API
-            const response = await fetch(`https://retroachievements.org/API/API_GetGame.php?i=${gameId}`);
-            const data = await response.json();
-            
-            if (data && data.Title) {
-                return data.Title;
-            }
-            throw new Error('RetroAchievements API returned no data');
-        } catch (error) {
-            console.warn(`RetroAchievements API failed for ${gameId}`);
-            throw error;
-        }
     }
 
     loadSampleData() {
@@ -204,7 +156,8 @@ class AchievementDashboard {
                 coverImage: 'https://cdn.akamai.steamstatic.com/steam/apps/1091500/library_600x900_2x.jpg',
                 image: 'https://via.placeholder.com/350x200/FF6B6B/FFFFFF?text=Cyberpunk+2077',
                 isCompleted: true,
-                lastPlayed: '2024-02'
+                lastPlayed: '2024-02',
+                tags: ["One", "Another","One Really Long Tag"]
             },
             {
                 id: 'witcher-3',
@@ -266,23 +219,38 @@ class AchievementDashboard {
     }
 
     setupEventListeners() {
-        // Platform navigation
-        document.querySelectorAll('.platform-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const activeBtn = document.querySelector('.platform-btn.active');
-                if (activeBtn) activeBtn.classList.remove('active');
-                btn.classList.add('active');
-                this.currentPlatform = btn.dataset.platform;
+        // Platform dropdown
+        const platformSelect = document.getElementById('platform-select');
+        if (platformSelect) {
+            platformSelect.addEventListener('change', (e) => {
+                this.currentPlatform = e.target.value;
                 this.applyFilters();
             });
-        });
+        }
 
-        // Search input
+        // Tag dropdown
+        const tagSelect = document.getElementById('tag-select');
+        if (tagSelect) {
+            tagSelect.addEventListener('change', (e) => {
+                const selectedTag = e.target.value;
+                this.selectedTags.clear();
+                if (selectedTag !== 'all') {
+                    this.selectedTags.add(selectedTag);
+                }
+                this.applyFilters();
+            });
+        }
+
+        // Search input with debounce for better performance
         const searchInput = document.getElementById('search-input');
         if (searchInput) {
+            let searchTimeout;
             searchInput.addEventListener('input', (e) => {
-                this.searchQuery = e.target.value.toLowerCase();
-                this.applyFilters();
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    this.searchQuery = e.target.value.toLowerCase();
+                    this.applyFilters();
+                }, 150); // 150ms debounce
             });
         }
 
@@ -311,6 +279,18 @@ class AchievementDashboard {
             // Platform filter
             if (this.currentPlatform !== 'all' && game.platform !== this.currentPlatform) {
                 return false;
+            }
+
+            // Tag filter
+            if (this.selectedTags.size > 0) {
+                if (!game.tags || !Array.isArray(game.tags)) {
+                    return false;
+                }
+                // Check if game has at least one of the selected tags
+                const hasSelectedTag = game.tags.some(tag => this.selectedTags.has(tag));
+                if (!hasSelectedTag) {
+                    return false;
+                }
             }
 
             // Search filter
@@ -396,17 +376,65 @@ class AchievementDashboard {
             gamesGrid.innerHTML = this.filteredAchievements.map(game => this.createGameCard(game)).join('');
         }
 
-        // Add click listeners to game cards
+        // Add click and keyboard listeners to game cards
         document.querySelectorAll('.game-card').forEach(card => {
-            card.addEventListener('click', () => {
+            const handleCardActivation = () => {
                 const gameId = card.dataset.gameId;
                 const game = this.achievements.find(g => this.generateGameId(g.name) === gameId);
                 if (game) {
                     const link = this.getGameLink(game);
                     if (link) {
-                        window.open(link, '_blank');
+                        window.open(link, '_blank', 'noopener,noreferrer');
                     }
                 }
+            };
+
+            card.addEventListener('click', handleCardActivation);
+            card.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleCardActivation();
+                }
+            });
+
+            // Tooltip on hover
+            card.addEventListener('mouseenter', (e) => {
+                const tooltipText = card.dataset.tooltip;
+                if (!tooltipText) return;
+
+                const tooltip = document.createElement('div');
+                tooltip.className = 'game-tooltip';
+                tooltip.id = 'game-tooltip';
+                tooltip.innerHTML = tooltipText.split('\n').map((line, i) => 
+                    i === 0 ? `<div class="tooltip-title">${line}</div>` : `<div class="tooltip-line">${line}</div>`
+                ).join('');
+
+                document.body.appendChild(tooltip);
+
+                // Position relative to card (bottom-right corner)
+                const cardRect = card.getBoundingClientRect();
+                const tooltipRect = tooltip.getBoundingClientRect();
+                
+                let left = cardRect.right + 8 + window.scrollX;
+                let top = cardRect.top + window.scrollY;
+                
+                // If tooltip would go off the right edge, show on left side
+                if (left + tooltipRect.width > window.innerWidth) {
+                    left = cardRect.left - tooltipRect.width - 8 + window.scrollX;
+                }
+                
+                // If tooltip would go off bottom, adjust upward
+                if (top + tooltipRect.height > window.innerHeight + window.scrollY) {
+                    top = cardRect.bottom - tooltipRect.height + window.scrollY;
+                }
+                
+                tooltip.style.left = left + 'px';
+                tooltip.style.top = top + 'px';
+            });
+
+            card.addEventListener('mouseleave', () => {
+                const tooltip = document.getElementById('game-tooltip');
+                if (tooltip) tooltip.remove();
             });
         });
     }
@@ -420,15 +448,13 @@ class AchievementDashboard {
 
     createGameCard(game) {
         const completionPercentage = Math.round((game.unlockedAchievements / game.totalAchievements) * 100);
-        
-        // Debug: Log the game object to console
-        console.log('Creating card for game:', game);
 
         const formatDate = (dateString) => {
             if (!dateString) return null;
-            return new Date(dateString).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short'
+            return new Date(dateString).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
             });
         };
 
@@ -438,34 +464,46 @@ class AchievementDashboard {
             return `${Math.round(hours)}h`;
         };
 
+        // Escape HTML to prevent XSS
+        const escapeHtml = (str) => {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        };
+
+        const safeName = escapeHtml(game.name);
+        
+        // Build tooltip content
+        const tooltipLines = [
+            safeName,
+            `${completionPercentage}% • ${game.unlockedAchievements}/${game.totalAchievements} achievements`
+        ];
+        if (game.dateCompleted || game.lastPlayed) {
+            tooltipLines.push(`Last achievement: ${game.dateCompleted ? formatDate(game.dateCompleted) : formatDate(game.lastPlayed)}`);
+        }
+        if (game.playedTime) {
+            tooltipLines.push(`Total hours: ${formatPlayedTime(game.playedTime)}`);
+        }
+        if (game.tags && game.tags.length > 0) {
+            tooltipLines.push(`Tags: ${game.tags.join(', ')}`);
+        }
+
         return `
-            <div class="game-card" data-game-id="${this.generateGameId(game.name)}">
+            <article class="game-card" data-platform="${game.platform}" data-game-id="${this.generateGameId(game.name)}" data-tooltip="${tooltipLines.join('\n')}" role="button" tabindex="0" aria-label="${safeName} - ${completionPercentage}% complete">
                 <div class="game-header">
                     ${game.coverImage ? 
-                        `<img src="${game.coverImage}" alt="${game.name}" class="game-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                         <div class="game-image-fallback" style="display: none;">${game.name}</div>` :
-                        `<div class="game-image-fallback">${game.name}</div>`
+                        `<img src="${game.coverImage}" alt="${safeName} cover" class="game-image" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                         <div class="game-image-fallback" style="display: none;" aria-hidden="true">${safeName}</div>` :
+                        `<div class="game-image-fallback" aria-hidden="true">${safeName}</div>`
                     }
-                    <div class="game-platform ${game.platform}">
-                        ${game.platform === 'steam' ? '<img src="assets/icons/steam.svg" alt="Steam" class="platform-icon">' : 
-                          game.platform === 'gog' ? '<img src="assets/icons/gog.svg" alt="GOG" class="platform-icon">' : 
-                          game.platform === 'retroachievements' ? '<i class="fas fa-medal"></i>' : 
+                    <div class="game-platform ${game.platform}" aria-label="${game.platform} platform">
+                        ${game.platform === 'steam' ? '<img src="assets/icons/steam.svg" alt="" class="platform-icon" aria-hidden="true">' : 
+                          game.platform === 'gog' ? '<img src="assets/icons/gog.svg" alt="" class="platform-icon" aria-hidden="true">' : 
+                          game.platform === 'retroachievements' ? '<img src="assets/icons/ra-icon.webp" alt="" class="platform-icon" aria-hidden="true">' : 
                           game.platform.toUpperCase()}
                     </div>
-                    <div class="completion-overlay">
-                        <div class="game-title">${game.name}</div>
-                        <div class="completion-text">${completionPercentage}% • ${game.unlockedAchievements}/${game.totalAchievements} achievements</div>
-                        ${game.dateCompleted || game.lastPlayed ? 
-                            `<div class="completion-date">Last achievement: ${game.dateCompleted ? formatDate(game.dateCompleted) : formatDate(game.lastPlayed)}</div>` : 
-                            ''
-                        }
-                        ${game.playedTime ? 
-                            `<div class="completion-date">Total hours: ${formatPlayedTime(game.playedTime)}</div>` : 
-                            ''
-                        }
-                    </div>
                 </div>
-            </div>
+            </article>
         `;
     }
 }
