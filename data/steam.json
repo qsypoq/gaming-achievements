@@ -4,7 +4,7 @@
     "platformId": "413150",
     "totalAchievements": 49,
     "unlockedAchievements": 49,
-    "dateCompleted": "2025-09-28",
+    "lastAchievement": "2025-09-28",
     "playedTime": 141,
     "coverImage": "assets/covers/steam/413150.jpg",
     "tags": ["Farming","Pixel Art"]
@@ -14,7 +14,7 @@
     "platformId": "512900",
     "totalAchievements": 52,
     "unlockedAchievements": 52,
-    "dateCompleted": "2025-10-04",
+    "lastAchievement": "2025-10-04",
     "playedTime": 38,
     "coverImage": "assets/covers/steam/512900.jpg",
     "tags": ["Roguelite","Pixel Art"]
@@ -24,7 +24,7 @@
     "platformId": "3694840",
     "totalAchievements": 16,
     "unlockedAchievements": 16,
-    "dateCompleted": "2025-09-19",
+    "lastAchievement": "2025-09-19",
     "playedTime": 64,
     "coverImage": "assets/covers/steam/3694840.jpg",
     "tags": ["Idle"]
@@ -34,7 +34,7 @@
     "platformId": "2905170",
     "totalAchievements": 7,
     "unlockedAchievements": 7,
-    "dateCompleted": "2025-09-21",
+    "lastAchievement": "2025-09-21",
     "playedTime": 7,
     "coverImage": "assets/covers/steam/2905170.jpg",
     "tags": ["Idle"]
@@ -44,7 +44,7 @@
     "platformId": "2775180",
     "totalAchievements": 100,
     "unlockedAchievements": 100,
-    "dateCompleted": "2025-09-07",
+    "lastAchievement": "2025-09-07",
     "playedTime": 1,
     "coverImage": "assets/covers/steam/2775180.jpg"
   },
@@ -53,17 +53,17 @@
     "platformId": "2666510",
     "totalAchievements": 71,
     "unlockedAchievements": 71,
-    "dateCompleted": "2025-10-16",
+    "lastAchievement": "2025-10-16",
     "playedTime": 159,
     "coverImage": "assets/covers/steam/2666510.jpg",
-    "tags": ["Idle"]
+    "tags": ["Idle", "Farming", "Pixel Art"]
   },
   {
     "name": "Mini Cozy Room: Lo-Fi",
     "platformId": "3511030",
     "totalAchievements": 14,
     "unlockedAchievements": 14,
-    "dateCompleted": "2025-10-27",
+    "lastAchievement": "2025-10-27",
     "playedTime": 100,
     "coverImage": "assets/covers/steam/3511030.jpg",
     "tags": ["Idle"]
@@ -73,26 +73,26 @@
     "platformId": "1658150",
     "totalAchievements": 59,
     "unlockedAchievements": 59,
-    "dateCompleted": "2025-10-31",
+    "lastAchievement": "2025-10-31",
     "playedTime": 95,
     "coverImage": "assets/covers/steam/1658150.jpg",
-    "tags": ["Farming","Creature Collector", "Pixel Art"]
+    "tags": ["Farming","Creature Collection", "Pixel Art"]
   },
   {
     "name": "Village Tale",
     "platformId": "3447510",
     "totalAchievements": 54,
     "unlockedAchievements": 54,
-    "dateCompleted": "2025-11-01",
+    "lastAchievement": "2025-11-01",
     "playedTime": 27,
     "coverImage": "assets/covers/steam/3447510.jpg",
-    "tags": ["Idle"]
+    "tags": ["Idle", "Farming", "Pixel Art"]
   },
   {
     "platformId": "3631290",
     "totalAchievements": 12,
     "unlockedAchievements": 12,
-    "dateCompleted": "2025-11-08",
+    "lastAchievement": "2025-11-08",
     "playedTime": 9,
     "coverImage": "assets/covers/steam/3631290.jpg",
     "name": "Slots & Daggers"
@@ -101,27 +101,45 @@
     "platformId": "2451100",
     "totalAchievements": 26,
     "unlockedAchievements": 26,
-    "dateCompleted": "2025-11-16",
+    "lastAchievement": "2025-11-16",
     "playedTime": 65,
     "name": "Little Rocket Lab",
-    "coverImage": "assets/covers/steam/2451100.jpg"
+    "coverImage": "assets/covers/steam/2451100.jpg",
+    "tags": ["Automation", "Pixel Art"]
   },
   {
     "platformId": "521150",
     "totalAchievements": 53,
     "unlockedAchievements": 53,
-    "dateCompleted": "2025-11-22",
+    "lastAchievement": "2025-11-22",
     "playedTime": 35,
     "name": "Another Brick in The Mall",
-    "coverImage": "assets/covers/steam/521150.jpg"
+    "coverImage": "assets/covers/steam/521150.jpg",
+    "tags": ["Tycoon"]
   },
   {
     "platformId": "3496000",
     "totalAchievements": 48,
     "unlockedAchievements": 48,
-    "dateCompleted": "2025-11-28",
+    "lastAchievement": "2025-11-28",
     "playedTime": 14,
     "name": "Ship, Inc.",
     "coverImage": "assets/covers/steam/3496000.jpg"
+  },
+  {
+    "platformId": "3919620",
+    "totalAchievements": 35,
+    "unlockedAchievements": 35,
+    "lastAchievement": "2025-12-07",
+    "playedTime": 25,
+    "tags": ["Idle", "Farming", "Pixel Art"]
+  },
+  {
+    "platformId": "740410",
+    "totalAchievements": 10,
+    "unlockedAchievements": 10,
+    "lastAchievement": "2025-12-07",
+    "playedTime": 4,
+    "tags": ["Puzzle", "Pixel Art"]
   }
 ]

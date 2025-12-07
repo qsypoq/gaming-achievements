@@ -66,12 +66,20 @@
                     <option value="retroachievements">RetroAchievements</option>
                 </select>
             </div>
-            <div class="filter-group">
-                <label for="tag-select">Tags:</label>
-                <select id="tag-select">
-                    <option value="all">All Tags</option>
-                    <!-- Tags will be dynamically populated -->
-                </select>
+            <div class="filter-group filter-group-tags">
+                <label>Tags:</label>
+                <div class="tag-filter-container">
+                    <button class="tag-filter-toggle" id="tag-filter-toggle">
+                        <span id="tag-filter-label">All Tags</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="tag-filter-dropdown" id="tag-filter-dropdown">
+                        <input type="text" class="tag-search" id="tag-search" placeholder="Search tags...">
+                        <div class="tag-list" id="tag-list">
+                            <!-- Tags will be dynamically populated -->
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="filter-group">
                 <label for="sort-select">Sort by:</label>

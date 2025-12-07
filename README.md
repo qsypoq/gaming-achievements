@@ -59,7 +59,7 @@ Add your games to `data/games.json`:
   "platform": "steam|gog|retroachievements", 
   "totalAchievements": 50,
   "unlockedAchievements": 35,
-  "dateCompleted": "2024-01-15",
+  "lastAchievement": "2024-01-15",
   "link": "https://platform-link-to-achievements",
   "coverImage": "https://example.com/game-cover.jpg"
 }
@@ -71,7 +71,7 @@ Add your games to `data/games.json`:
 - `platform`: Gaming platform (steam, gog, or retroachievements)
 - `totalAchievements`: Total number of achievements available
 - `unlockedAchievements`: Number of achievements you've unlocked
-- `dateCompleted`: Date when you completed all achievements in YYYY-MM-DD format (null if not completed)
+- `lastAchievement`: Date when you unlocked your last achievement in YYYY-MM-DD format (null if not completed)
 - `link`: URL to the achievement page on the platform (optional)
 - `coverImage`: URL to the game's cover art image (optional)
 
@@ -132,7 +132,7 @@ The `games.json` file should follow this structure:
     "name": "Game Name",
     "platform": "steam",
     "totalAchievements": 50,
-    "dateCompleted": "2024-02-28T23:45:00Z",
+    "lastAchievement": "2024-02-28T23:45:00Z",
     "link": "https://steamcommunity.com/stats/12345/achievements"
   },
   {
@@ -140,7 +140,7 @@ The `games.json` file should follow this structure:
     "name": "Another Game",
     "platform": "gog", 
     "totalAchievements": 30,
-    "dateCompleted": null,
+    "lastAchievement": null,
     "link": "https://www.gog.com/game/another-game"
   }
 ]
@@ -152,7 +152,7 @@ The `games.json` file should follow this structure:
 - **`name`**: Display name of the game
 - **`platform`**: Gaming platform (`steam`, `gog`, `retroachievements`, `epic`, etc.)
 - **`totalAchievements`**: Total number of achievements available in the game
-- **`dateCompleted`**: ISO 8601 date when you completed the game (`null` if not completed)
+- **`lastAchievement`**: ISO 8601 date when you unlocked your last achievement (`null` if no achievements yet)
 - **`link`**: URL to the achievement list page (optional but recommended)
 
 ### Achievement Links Examples

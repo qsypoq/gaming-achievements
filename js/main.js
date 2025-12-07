@@ -7,17 +7,14 @@ class AchievementDashboard {
         this.currentSort = 'recent';
         this.currentRarity = 'all';
         this.searchQuery = '';
-        this.selectedTags = new Set();
+        this.includedTags = new Set();
+        this.excludedTags = new Set();
         this.allTags = new Set();
         
         // Call init but don't await in constructor
         this.init().catch(error => {
             console.error('❌ Initialization error:', error);
-            // Load sample data as fallback
-            this.loadSampleData();
             this.setupEventListeners();
-            this.updateStats();
-            this.renderAchievements();
         });
     }
 
@@ -69,18 +66,18 @@ class AchievementDashboard {
                     ...game,
                     name: game.name || `Unknown Game (${game.platformId})`,
                     coverImage: coverImage,
-                    isCompleted: game.dateCompleted !== null,
-                    lastPlayed: game.dateCompleted || new Date().toISOString().split('T')[0]
+                    isCompleted: game.lastAchievement !== null,
+                    lastPlayed: game.lastAchievement || new Date().toISOString().split('T')[0]
                 };
             });
 
             // Sort achievements
             this.achievements.sort((a, b) => {
-                if (a.dateCompleted && b.dateCompleted) {
-                    return new Date(b.dateCompleted) - new Date(a.dateCompleted);
+                if (a.lastAchievement && b.lastAchievement) {
+                    return new Date(b.lastAchievement) - new Date(a.lastAchievement);
                 }
-                if (a.dateCompleted && !b.dateCompleted) return -1;
-                if (!a.dateCompleted && b.dateCompleted) return 1;
+                if (a.lastAchievement && !b.lastAchievement) return -1;
+                if (!a.lastAchievement && b.lastAchievement) return 1;
                 return a.name.localeCompare(b.name);
             });
             
@@ -88,8 +85,7 @@ class AchievementDashboard {
             this.extractAllTags();
         } catch (error) {
             console.error('Error loading achievements:', error);
-            // Load sample data as fallback
-            this.loadSampleData();
+            throw error;
         }
     }
 
@@ -104,29 +100,94 @@ class AchievementDashboard {
     }
 
     renderTagFilters() {
-        const tagSelect = document.getElementById('tag-select');
-        if (!tagSelect) return;
-        
-        // Clear existing options except "All Tags"
-        tagSelect.innerHTML = '<option value="all">All Tags</option>';
+        const tagList = document.getElementById('tag-list');
+        const filterGroup = document.querySelector('.filter-group-tags');
+        if (!tagList) return;
         
         // Hide the dropdown if there are no tags
-        const filterGroup = tagSelect.closest('.filter-group');
         if (this.allTags.size === 0) {
             if (filterGroup) filterGroup.style.display = 'none';
             return;
         }
         
         if (filterGroup) filterGroup.style.display = '';
+        tagList.innerHTML = '';
         
-        // Add tag options
+        // Add tag checkboxes
         const sortedTags = Array.from(this.allTags).sort();
         sortedTags.forEach(tag => {
-            const option = document.createElement('option');
-            option.value = tag;
-            option.textContent = tag;
-            tagSelect.appendChild(option);
+            const tagItem = document.createElement('div');
+            tagItem.className = 'tag-item';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `tag-${tag}`;
+            checkbox.className = 'tag-checkbox';
+            
+            const includeBtn = document.createElement('button');
+            includeBtn.className = 'tag-mode-btn include-btn';
+            includeBtn.innerHTML = '<i class="fas fa-plus"></i>';
+            includeBtn.title = 'Include';
+            includeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.includedTags.has(tag)) {
+                    this.includedTags.delete(tag);
+                    includeBtn.classList.remove('active');
+                } else {
+                    this.includedTags.add(tag);
+                    this.excludedTags.delete(tag);
+                    includeBtn.classList.add('active');
+                    excludeBtn.classList.remove('active');
+                }
+                this.updateTagFilterLabel();
+                this.applyFilters();
+            });
+            
+            const excludeBtn = document.createElement('button');
+            excludeBtn.className = 'tag-mode-btn exclude-btn';
+            excludeBtn.innerHTML = '<i class="fas fa-minus"></i>';
+            excludeBtn.title = 'Exclude';
+            excludeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.excludedTags.has(tag)) {
+                    this.excludedTags.delete(tag);
+                    excludeBtn.classList.remove('active');
+                } else {
+                    this.excludedTags.add(tag);
+                    this.includedTags.delete(tag);
+                    excludeBtn.classList.add('active');
+                    includeBtn.classList.remove('active');
+                }
+                this.updateTagFilterLabel();
+                this.applyFilters();
+            });
+            
+            const tagName = document.createElement('span');
+            tagName.className = 'tag-name';
+            tagName.textContent = tag;
+            
+            tagItem.appendChild(includeBtn);
+            tagItem.appendChild(excludeBtn);
+            tagItem.appendChild(tagName);
+            tagList.appendChild(tagItem);
         });
+        
+        this.updateTagFilterLabel();
+    }
+    
+    updateTagFilterLabel() {
+        const label = document.getElementById('tag-filter-label');
+        if (!label) return;
+        
+        const totalFilters = this.includedTags.size + this.excludedTags.size;
+        if (totalFilters === 0) {
+            label.textContent = 'All Tags';
+        } else {
+            const parts = [];
+            if (this.includedTags.size > 0) parts.push(`+${this.includedTags.size}`);
+            if (this.excludedTags.size > 0) parts.push(`-${this.excludedTags.size}`);
+            label.textContent = parts.join(' ');
+        }
     }
 
 
@@ -142,82 +203,6 @@ class AchievementDashboard {
         return coverPaths[game.platform] || null;
     }
 
-    loadSampleData() {
-        this.achievements = [
-            {
-                id: 'cyberpunk-2077',
-                name: 'Cyberpunk 2077',
-                platform: 'steam',
-                platformId: '1091500',
-                totalAchievements: 44,
-                unlockedAchievements: 44,
-                dateCompleted: '2024-02',
-                playedTime: 85,
-                coverImage: 'https://cdn.akamai.steamstatic.com/steam/apps/1091500/library_600x900_2x.jpg',
-                image: 'https://via.placeholder.com/350x200/FF6B6B/FFFFFF?text=Cyberpunk+2077',
-                isCompleted: true,
-                lastPlayed: '2024-02',
-                tags: ["One", "Another","One Really Long Tag"]
-            },
-            {
-                id: 'witcher-3',
-                name: 'The Witcher 3: Wild Hunt',
-                platform: 'gog',
-                platformId: 'the_witcher_3_wild_hunt',
-                totalAchievements: 78,
-                unlockedAchievements: 78,
-                dateCompleted: '2021-08',
-                playedTime: 150,
-                coverImage: 'https://images.gog-statics.com/5643a7c831df452d29005caeca24c231cd78f5628cd7f6e0cf5a9135a8e4d7f5_product_card_v2_mobile_slider_639.jpg',
-                image: 'https://via.placeholder.com/350x200/4ECDC4/FFFFFF?text=The+Witcher+3',
-                isCompleted: true,
-                lastPlayed: '2021-08'
-            },
-            {
-                id: 'super-mario-world',
-                name: 'Super Mario World',
-                platform: 'retroachievements',
-                platformId: '228',
-                totalAchievements: 51,
-                unlockedAchievements: 51,
-                dateCompleted: '2024-03',
-                playedTime: 12,
-                image: 'https://via.placeholder.com/350x200/FFE66D/FFFFFF?text=Super+Mario+World',
-                isCompleted: true,
-                lastPlayed: '2024-03'
-            },
-            {
-                id: 'hollow-knight',
-                name: 'Hollow Knight',
-                platform: 'steam',
-                platformId: '367520',
-                totalAchievements: 63,
-                unlockedAchievements: 45,
-                dateCompleted: null,
-                playedTime: 28,
-                coverImage: 'https://cdn.akamai.steamstatic.com/steam/apps/367520/library_600x900_2x.jpg',
-                image: 'https://via.placeholder.com/350x200/6C5CE7/FFFFFF?text=Hollow+Knight',
-                isCompleted: false,
-                lastPlayed: '2024-03'
-            },
-            {
-                id: 'stardew-valley',
-                name: 'Stardew Valley',
-                platform: 'steam',
-                platformId: '413150',
-                totalAchievements: 40,
-                unlockedAchievements: 23,
-                dateCompleted: null,
-                playedTime: 52,
-                coverImage: 'https://cdn.akamai.steamstatic.com/steam/apps/413150/library_600x900_2x.jpg',
-                image: 'https://via.placeholder.com/350x200/8B5A3C/FFFFFF?text=Stardew+Valley',
-                isCompleted: false,
-                lastPlayed: '2024-03'
-            }
-        ];
-        this.filteredAchievements = [...this.achievements];
-    }
-
     setupEventListeners() {
         // Platform dropdown
         const platformSelect = document.getElementById('platform-select');
@@ -228,16 +213,32 @@ class AchievementDashboard {
             });
         }
 
-        // Tag dropdown
-        const tagSelect = document.getElementById('tag-select');
-        if (tagSelect) {
-            tagSelect.addEventListener('change', (e) => {
-                const selectedTag = e.target.value;
-                this.selectedTags.clear();
-                if (selectedTag !== 'all') {
-                    this.selectedTags.add(selectedTag);
+        // Tag filter toggle
+        const tagFilterToggle = document.getElementById('tag-filter-toggle');
+        const tagFilterDropdown = document.getElementById('tag-filter-dropdown');
+        if (tagFilterToggle && tagFilterDropdown) {
+            tagFilterToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                tagFilterDropdown.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.tag-filter-container')) {
+                    tagFilterDropdown.classList.remove('show');
                 }
-                this.applyFilters();
+            });
+        }
+
+        // Tag search
+        const tagSearch = document.getElementById('tag-search');
+        if (tagSearch) {
+            tagSearch.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                document.querySelectorAll('.tag-item').forEach(item => {
+                    const tagName = item.querySelector('.tag-name').textContent.toLowerCase();
+                    item.style.display = tagName.includes(searchTerm) ? '' : 'none';
+                });
             });
         }
 
@@ -282,14 +283,23 @@ class AchievementDashboard {
             }
 
             // Tag filter
-            if (this.selectedTags.size > 0) {
-                if (!game.tags || !Array.isArray(game.tags)) {
-                    return false;
+            if (this.includedTags.size > 0 || this.excludedTags.size > 0) {
+                const gameTags = game.tags && Array.isArray(game.tags) ? game.tags : [];
+                
+                // Check included tags (must have at least one)
+                if (this.includedTags.size > 0) {
+                    const hasIncludedTag = gameTags.some(tag => this.includedTags.has(tag));
+                    if (!hasIncludedTag) {
+                        return false;
+                    }
                 }
-                // Check if game has at least one of the selected tags
-                const hasSelectedTag = game.tags.some(tag => this.selectedTags.has(tag));
-                if (!hasSelectedTag) {
-                    return false;
+                
+                // Check excluded tags (must not have any)
+                if (this.excludedTags.size > 0) {
+                    const hasExcludedTag = gameTags.some(tag => this.excludedTags.has(tag));
+                    if (hasExcludedTag) {
+                        return false;
+                    }
                 }
             }
 
@@ -323,11 +333,11 @@ class AchievementDashboard {
                 case 'recent':
                 default:
                     // Sort by completion date (completed games first, then by date)
-                    if (a.dateCompleted && b.dateCompleted) {
-                        return new Date(b.dateCompleted) - new Date(a.dateCompleted);
+                    if (a.lastAchievement && b.lastAchievement) {
+                        return new Date(b.lastAchievement) - new Date(a.lastAchievement);
                     }
-                    if (a.dateCompleted && !b.dateCompleted) return -1;
-                    if (!a.dateCompleted && b.dateCompleted) return 1;
+                    if (a.lastAchievement && !b.lastAchievement) return -1;
+                    if (!a.lastAchievement && b.lastAchievement) return 1;
                     return a.name.localeCompare(b.name);
             }
         });
@@ -346,9 +356,9 @@ class AchievementDashboard {
     }
 
     updateStats() {
-        const totalAchievements = this.achievements.reduce((sum, game) => sum + game.unlockedAchievements, 0);
-        const completedGames = this.achievements.filter(game => game.dateCompleted).length;
-        const totalTime = this.achievements.reduce((sum, game) => sum + (game.playedTime || 0), 0);
+        const totalAchievements = this.filteredAchievements.reduce((sum, game) => sum + game.unlockedAchievements, 0);
+        const completedGames = this.filteredAchievements.filter(game => game.lastAchievement).length;
+        const totalTime = this.filteredAchievements.reduce((sum, game) => sum + (game.playedTime || 0), 0);
 
         document.getElementById('total-achievements').textContent = totalAchievements;
         document.getElementById('rare-achievements').textContent = completedGames;
@@ -415,8 +425,12 @@ class AchievementDashboard {
                 const cardRect = card.getBoundingClientRect();
                 const tooltipRect = tooltip.getBoundingClientRect();
                 
+                // Get tooltip's padding from computed style
+                const tooltipStyle = window.getComputedStyle(tooltip);
+                const tooltipPaddingTop = parseFloat(tooltipStyle.paddingTop);
+                
                 let left = cardRect.right + 8 + window.scrollX;
-                let top = cardRect.top + window.scrollY;
+                let top = cardRect.top + window.scrollY - tooltipPaddingTop;
                 
                 // If tooltip would go off the right edge, show on left side
                 if (left + tooltipRect.width > window.innerWidth) {
@@ -478,8 +492,8 @@ class AchievementDashboard {
             safeName,
             `${completionPercentage}% • ${game.unlockedAchievements}/${game.totalAchievements} achievements`
         ];
-        if (game.dateCompleted || game.lastPlayed) {
-            tooltipLines.push(`Last achievement: ${game.dateCompleted ? formatDate(game.dateCompleted) : formatDate(game.lastPlayed)}`);
+        if (game.lastAchievement || game.lastPlayed) {
+            tooltipLines.push(`Last achievement: ${game.lastAchievement ? formatDate(game.lastAchievement) : formatDate(game.lastPlayed)}`);
         }
         if (game.playedTime) {
             tooltipLines.push(`Total hours: ${formatPlayedTime(game.playedTime)}`);
