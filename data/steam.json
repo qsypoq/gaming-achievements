@@ -7,7 +7,10 @@
     "lastAchievement": "2025-09-28",
     "playedTime": 141,
     "coverImage": "assets/covers/steam/413150.jpg",
-    "tags": ["Farming","Pixel Art"]
+    "tags": [
+      "Farming",
+      "Pixel Art"
+    ]
   },
   {
     "name": "Streets of Rogue",
@@ -17,7 +20,10 @@
     "lastAchievement": "2025-10-04",
     "playedTime": 38,
     "coverImage": "assets/covers/steam/512900.jpg",
-    "tags": ["Roguelite","Pixel Art"]
+    "tags": [
+      "Roguelite",
+      "Pixel Art"
+    ]
   },
   {
     "name": "Mini Painter",
@@ -27,7 +33,9 @@
     "lastAchievement": "2025-09-19",
     "playedTime": 64,
     "coverImage": "assets/covers/steam/3694840.jpg",
-    "tags": ["Idle"]
+    "tags": [
+      "Idle"
+    ]
   },
   {
     "name": "Magic Archery",
@@ -37,7 +45,9 @@
     "lastAchievement": "2025-09-21",
     "playedTime": 7,
     "coverImage": "assets/covers/steam/2905170.jpg",
-    "tags": ["Idle"]
+    "tags": [
+      "Idle"
+    ]
   },
   {
     "name": "101 Cats Hidden",
@@ -56,7 +66,11 @@
     "lastAchievement": "2025-10-16",
     "playedTime": 159,
     "coverImage": "assets/covers/steam/2666510.jpg",
-    "tags": ["Idle", "Farming", "Pixel Art"]
+    "tags": [
+      "Idle",
+      "Farming",
+      "Pixel Art"
+    ]
   },
   {
     "name": "Mini Cozy Room: Lo-Fi",
@@ -66,7 +80,9 @@
     "lastAchievement": "2025-10-27",
     "playedTime": 100,
     "coverImage": "assets/covers/steam/3511030.jpg",
-    "tags": ["Idle"]
+    "tags": [
+      "Idle"
+    ]
   },
   {
     "name": "Moonstone Island",
@@ -76,7 +92,11 @@
     "lastAchievement": "2025-10-31",
     "playedTime": 95,
     "coverImage": "assets/covers/steam/1658150.jpg",
-    "tags": ["Farming","Creature Collection", "Pixel Art"]
+    "tags": [
+      "Farming",
+      "Creature Collection",
+      "Pixel Art"
+    ]
   },
   {
     "name": "Village Tale",
@@ -86,7 +106,11 @@
     "lastAchievement": "2025-11-01",
     "playedTime": 27,
     "coverImage": "assets/covers/steam/3447510.jpg",
-    "tags": ["Idle", "Farming", "Pixel Art"]
+    "tags": [
+      "Idle",
+      "Farming",
+      "Pixel Art"
+    ]
   },
   {
     "platformId": "3631290",
@@ -105,7 +129,10 @@
     "playedTime": 65,
     "name": "Little Rocket Lab",
     "coverImage": "assets/covers/steam/2451100.jpg",
-    "tags": ["Automation", "Pixel Art"]
+    "tags": [
+      "Automation",
+      "Pixel Art"
+    ]
   },
   {
     "platformId": "521150",
@@ -115,7 +142,9 @@
     "playedTime": 35,
     "name": "Another Brick in The Mall",
     "coverImage": "assets/covers/steam/521150.jpg",
-    "tags": ["Tycoon"]
+    "tags": [
+      "Tycoon"
+    ]
   },
   {
     "platformId": "3496000",
@@ -132,7 +161,12 @@
     "unlockedAchievements": 35,
     "lastAchievement": "2025-12-07",
     "playedTime": 25,
-    "tags": ["Idle", "Farming", "Pixel Art"]
+    "tags": [
+      "Idle",
+      "Farming",
+      "Pixel Art"
+    ],
+    "name": "Fangs to Fields"
   },
   {
     "platformId": "740410",
@@ -140,7 +174,12 @@
     "unlockedAchievements": 10,
     "lastAchievement": "2025-12-07",
     "playedTime": 4,
-    "tags": ["Puzzle", "Pixel Art"]
+    "tags": [
+      "Puzzle",
+      "Pixel Art"
+    ],
+    "name": "Puzzle Chambers",
+    "coverImage": "assets/covers/steam/740410.jpg"
   },
   {
     "platformId": "1454400",
@@ -148,6 +187,10 @@
     "unlockedAchievements": 613,
     "lastAchievement": "2025-12-08",
     "playedTime": 718,
-    "tags": ["Idle"]
+    "tags": [
+      "Idle"
+    ],
+    "name": "Cookie Clicker",
+    "coverImage": "assets/covers/steam/1454400.jpg"
   }
 ]
