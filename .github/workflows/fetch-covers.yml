@@ -4,7 +4,9 @@ on:
   push:
     branches: [ main ]
     paths: 
-      - 'data/games.json'
+      - 'data/steam.json'
+      - 'data/gog.json'
+      - 'data/retroachievements.json'
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
@@ -30,7 +32,7 @@ jobs:
     - name: Check for changes
       id: check-changes
       run: |
-        if git diff --quiet data/games.json && [ -z "$(git ls-files --others --exclude-standard assets/covers/)" ]; then
+        if git diff --quiet data/steam.json data/gog.json data/retroachievements.json && [ -z "$(git ls-files --others --exclude-standard assets/covers/)" ]; then
           echo "changes=false" >> $GITHUB_OUTPUT
         else
           echo "changes=true" >> $GITHUB_OUTPUT
@@ -41,7 +43,7 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add data/games.json assets/covers/
+        git add data/steam.json data/gog.json data/retroachievements.json assets/covers/
         git commit -m "🎮 Auto-update game names and cover images"
         git push
       env:
