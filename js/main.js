@@ -1,4 +1,80 @@
 // Achievement Dashboard JavaScript
+
+/**
+ * Achievement Progress Calculator
+ * Handles progress calculation and UI generation for achievement bars
+ */
+class AchievementProgress {
+    /**
+     * Calculate progress and generate UI data
+     * @param {number} totalAchievements - Total achievements available
+     * @param {number} earnedAchievements - Achievements unlocked by user
+     * @returns {Object} Progress data object
+     */
+    static calculate(totalAchievements, earnedAchievements) {
+        const total = this.sanitizeNumber(totalAchievements);
+        const earned = this.sanitizeNumber(earnedAchievements);
+        
+        if (total === 0) {
+            return {
+                percentage: 0,
+                displayPercentage: '0%',
+                earned: 0,
+                total: 0,
+                isComplete: false,
+                status: 'No Achievements',
+                barWidth: '2px',
+                cssClass: '',
+                showRibbon: false
+            };
+        }
+        
+        const cappedEarned = Math.min(earned, total);
+        const rawPercentage = (cappedEarned / total) * 100;
+        const percentage = Math.round(rawPercentage);
+        const isComplete = cappedEarned === total && total > 0;
+        
+        let barWidth;
+        if (percentage === 0) {
+            barWidth = '2px';
+        } else if (percentage < 1) {
+            barWidth = '2px';
+        } else {
+            barWidth = `${percentage}%`;
+        }
+        
+        let status;
+        if (isComplete) {
+            status = 'Complete';
+        } else if (percentage === 0) {
+            status = 'Not Started';
+        } else if (percentage < 25) {
+            status = 'Started';
+        } else if (percentage < 75) {
+            status = 'In Progress';
+        } else {
+            status = 'Almost There';
+        }
+        
+        return {
+            percentage,
+            displayPercentage: `${percentage}%`,
+            earned: cappedEarned,
+            total,
+            isComplete,
+            status,
+            barWidth,
+            cssClass: isComplete ? 'complete' : '',
+            showRibbon: isComplete
+        };
+    }
+    
+    static sanitizeNumber(value) {
+        const num = Number(value);
+        return Number.isFinite(num) && num >= 0 ? Math.floor(num) : 0;
+    }
+}
+
 class AchievementDashboard {
     constructor() {
         this.achievements = [];
@@ -462,6 +538,12 @@ class AchievementDashboard {
 
     createGameCard(game) {
         const completionPercentage = Math.round((game.unlockedAchievements / game.totalAchievements) * 100);
+        
+        // Calculate progress data
+        const progressData = AchievementProgress.calculate(
+            game.totalAchievements,
+            game.unlockedAchievements
+        );
 
         const formatDate = (dateString) => {
             if (!dateString) return null;
@@ -501,6 +583,20 @@ class AchievementDashboard {
         if (game.tags && game.tags.length > 0) {
             tooltipLines.push(`Tags: ${game.tags.join(', ')}`);
         }
+        
+        // Mutually exclusive states: ribbon for 100%, progress bar for incomplete
+        const completionHTML = progressData.isComplete ? `
+            <div class="floating-ribbon" aria-label="All achievements completed">
+                <img src="assets/icons/complete.png" alt="" class="ribbon-icon" aria-hidden="true">
+                <span class="ribbon-text">100% Complete</span>
+            </div>
+        ` : `
+            <div class="game-progress-overlay" aria-label="Achievement progress: ${progressData.earned} out of ${progressData.total} achievements unlocked, ${progressData.percentage}%">
+                <div class="achievement-progress">
+                    <span class="achievement-count">${progressData.earned}/${progressData.total}</span>
+                </div>
+            </div>
+        `;
 
         return `
             <article class="game-card" data-platform="${game.platform}" data-game-id="${this.generateGameId(game.name)}" data-tooltip="${tooltipLines.join('\n')}" role="button" tabindex="0" aria-label="${safeName} - ${completionPercentage}% complete">
@@ -517,6 +613,8 @@ class AchievementDashboard {
                           game.platform.toUpperCase()}
                     </div>
                 </div>
+                ${!progressData.isComplete ? completionHTML : ''}
+                ${progressData.isComplete ? completionHTML : ''}
             </article>
         `;
     }

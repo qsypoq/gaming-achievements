@@ -544,16 +544,17 @@ body {
 .game-card {
     background: rgba(0, 0, 0, 0.2);
     border-radius: var(--radius-sm);
-    overflow: visible; /* Allow tooltip to show outside */
+    overflow: visible; /* Allow ribbon to show outside */
     transition: all 0.15s ease;
     cursor: pointer;
-    height: 108px; /* Uniform height for all cards */
+    height: auto; /* Auto height to accommodate header + progress bar */
     width: 230px; /* Steam header at 50% (460/2) */
     position: relative;
     display: flex;
     flex-direction: column;
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
     flex-shrink: 0;
+    margin-bottom: 20px; /* Extra space for floating ribbon */
 }
 
 /* Platform-specific widths */
@@ -584,14 +585,13 @@ body {
 
 .game-header {
     position: relative;
-    height: 100%;
+    height: 108px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    flex: 1;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 }
 
 .game-image {
@@ -696,6 +696,197 @@ body {
     color: var(--text-secondary);
     line-height: 1.4;
     margin-bottom: 2px;
+}
+
+/* ============================================
+   Achievement Progress Bar
+   ============================================ */
+
+/* Progress bar container - below header */
+.game-progress-overlay {
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(to right, #0099cc, #00ccff, #0099cc);
+    border: 1px solid #00ccff;
+    padding: 4px 10px;
+    border-radius: var(--radius-md);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+    z-index: 10;
+}
+
+/* Single row layout */
+.achievement-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Achievement count text */
+.achievement-count {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+/* Percentage text */
+.progress-percentage {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    min-width: 36px;
+    text-align: right;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Ribbon icon for 100% completion */
+.progress-ribbon-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+}
+
+/* ============================================
+   Floating Ribbon Badge (100% Complete)
+   ============================================ */
+
+.floating-ribbon {
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(to right, #0099cc, #00ccff, #0099cc);
+    border: 1px solid #00ccff;
+    color: #FFFFFF;
+    padding: 4px 10px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.ribbon-icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
+.ribbon-text {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   100% Completion Ribbon
+   ============================================ */
+
+.completion-ribbon {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #5CB85C 0%, #4A9D4A 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    z-index: 3;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.completion-ribbon::before {
+    content: '🏆';
+    font-size: 18px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+/* Pulse animation for completed games */
+@keyframes ribbon-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.completion-ribbon {
+    animation: ribbon-pulse 2s ease-in-out infinite;
+}
+
+/* Hover effects */
+@media (hover: hover) {
+    .game-card:hover .progress-fill {
+        filter: brightness(1.2);
+    }
+    
+    .game-card:hover .completion-ribbon {
+        transform: scale(1.1);
+        animation: none;
+    }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .game-progress-overlay {
+        padding: 10px 12px;
+    }
+    
+    .progress-bar {
+        height: 10px;
+    }
+    
+    .progress-percentage {
+        font-size: 0.8rem;
+        min-width: 40px;
+    }
+    
+    .achievement-count {
+        font-size: 0.75rem;
+        left: 8px;
+    }
+    
+    .completion-ribbon {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .completion-ribbon::before {
+        font-size: 20px;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .progress-fill {
+        transition: none;
+    }
+    
+    .completion-ribbon {
+        animation: none;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .progress-bar {
+        border: 1px solid #FFFFFF;
+    }
+    
+    .progress-fill {
+        background: #FFFFFF;
+    }
+    
+    .game-progress-overlay {
+        background: #000000;
+    }
 }
 
 .completion-date {

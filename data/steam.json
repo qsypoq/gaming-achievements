@@ -141,5 +141,13 @@
     "lastAchievement": "2025-12-07",
     "playedTime": 4,
     "tags": ["Puzzle", "Pixel Art"]
+  },
+  {
+    "platformId": "1454400",
+    "totalAchievements": 637,
+    "unlockedAchievements": 613,
+    "lastAchievement": "2025-12-08",
+    "playedTime": 718,
+    "tags": ["Idle"]
   }
 ]
