@@ -166,7 +166,8 @@
       "Farming",
       "Pixel Art"
     ],
-    "name": "Fangs to Fields"
+    "name": "Fangs to Fields",
+    "coverImage": "assets/covers/steam/3919620.jpg"
   },
   {
     "platformId": "740410",
@@ -201,6 +202,8 @@
     "playedTime": 3,
     "tags": [
       "Pixel Art"
-    ]
+    ],
+    "name": "Turnip Boy Commits Tax Evasion",
+    "coverImage": "assets/covers/steam/1205450.jpg"
   }
 ]
