@@ -184,13 +184,23 @@
   {
     "platformId": "1454400",
     "totalAchievements": 637,
-    "unlockedAchievements": 613,
-    "lastAchievement": "2025-12-08",
+    "unlockedAchievements": 616,
+    "lastAchievement": "2025-12-14",
     "playedTime": 718,
     "tags": [
       "Idle"
     ],
     "name": "Cookie Clicker",
     "coverImage": "assets/covers/steam/1454400.jpg"
+  },
+  {
+    "platformId": "1205450",
+    "totalAchievements": 37,
+    "unlockedAchievements": 37,
+    "lastAchievement": "2025-12-14",
+    "playedTime": 3,
+    "tags": [
+      "Pixel Art"
+    ]
   }
 ]

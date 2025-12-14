@@ -406,6 +406,10 @@ class AchievementDashboard {
                     const completionA = (a.unlockedAchievements / a.totalAchievements) * 100;
                     const completionB = (b.unlockedAchievements / b.totalAchievements) * 100;
                     return completionB - completionA;
+                case 'playtime':
+                    const timeA = a.playedTime || 0;
+                    const timeB = b.playedTime || 0;
+                    return timeB - timeA;
                 case 'recent':
                 default:
                     // Sort by completion date (completed games first, then by date)
@@ -433,7 +437,9 @@ class AchievementDashboard {
 
     updateStats() {
         const totalAchievements = this.filteredAchievements.reduce((sum, game) => sum + game.unlockedAchievements, 0);
-        const completedGames = this.filteredAchievements.filter(game => game.lastAchievement).length;
+        const completedGames = this.filteredAchievements.filter(game => 
+            game.totalAchievements > 0 && game.unlockedAchievements === game.totalAchievements
+        ).length;
         const totalTime = this.filteredAchievements.reduce((sum, game) => sum + (game.playedTime || 0), 0);
 
         document.getElementById('total-achievements').textContent = totalAchievements;

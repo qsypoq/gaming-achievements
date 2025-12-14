@@ -708,12 +708,13 @@ body {
     bottom: -12px;
     left: 50%;
     transform: translateX(-50%);
-    background: linear-gradient(to right, #0099cc, #00ccff, #0099cc);
-    border: 1px solid #00ccff;
+    background: linear-gradient(to right, rgba(42, 71, 94, 0.95), rgba(58, 91, 114, 0.95), rgba(42, 71, 94, 0.95));
+    border: 1px solid rgba(124, 143, 166, 0.5);
     padding: 4px 10px;
     border-radius: var(--radius-md);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
     z-index: 10;
+    backdrop-filter: blur(4px);
 }
 
 /* Single row layout */
@@ -727,7 +728,7 @@ body {
 .achievement-count {
     font-size: 0.7rem;
     font-weight: 600;
-    color: #FFFFFF;
+    color: #c7d5e0;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
@@ -759,20 +760,21 @@ body {
     bottom: -12px;
     left: 50%;
     transform: translateX(-50%);
-    background: linear-gradient(to right, #0099cc, #00ccff, #0099cc);
-    border: 1px solid #00ccff;
-    color: #FFFFFF;
+    background: linear-gradient(to right, rgba(42, 71, 94, 0.95), rgba(58, 91, 114, 0.95), rgba(42, 71, 94, 0.95));
+    border: 1px solid rgba(124, 143, 166, 0.5);
+    color: #c7d5e0;
     padding: 4px 10px;
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     gap: 6px;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
     font-size: 0.7rem;
     font-weight: 600;
     white-space: nowrap;
     z-index: 10;
     pointer-events: none;
+    backdrop-filter: blur(4px);
 }
 
 .ribbon-icon {
@@ -782,7 +784,8 @@ body {
 }
 
 .ribbon-text {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    color: #c7d5e0;
 }
 
 /* ============================================
