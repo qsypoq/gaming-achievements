@@ -732,6 +732,14 @@ body {
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
+/* Platform icon in progress overlay */
+.progress-platform-icon {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+    filter: brightness(1.2);
+}
+
 /* Percentage text */
 .progress-percentage {
     font-size: 0.75rem;
@@ -763,7 +771,7 @@ body {
     background: linear-gradient(to right, rgba(42, 71, 94, 0.95), rgba(58, 91, 114, 0.95), rgba(42, 71, 94, 0.95));
     border: 1px solid rgba(124, 143, 166, 0.5);
     color: #c7d5e0;
-    padding: 4px 10px;
+    padding: 4px 12px;
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
@@ -775,6 +783,13 @@ body {
     z-index: 10;
     pointer-events: none;
     backdrop-filter: blur(4px);
+}
+
+.ribbon-platform-icon {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+    filter: brightness(1.2);
 }
 
 .ribbon-icon {

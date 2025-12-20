@@ -591,14 +591,19 @@ class AchievementDashboard {
         }
         
         // Mutually exclusive states: ribbon for 100%, progress bar for incomplete
+        const completionLabel = game.platform === 'retroachievements' ? 'Mastered' : '100% Complete';
+        const platformIconSrc = game.platform === 'steam' ? 'assets/icons/steam.svg' : 
+                                game.platform === 'gog' ? 'assets/icons/gog.svg' : 
+                                game.platform === 'retroachievements' ? 'assets/icons/ra-icon.webp' : '';
         const completionHTML = progressData.isComplete ? `
             <div class="floating-ribbon" aria-label="All achievements completed">
-                <img src="assets/icons/complete.png" alt="" class="ribbon-icon" aria-hidden="true">
-                <span class="ribbon-text">100% Complete</span>
+                ${platformIconSrc ? `<img src="${platformIconSrc}" alt="" class="ribbon-platform-icon" aria-hidden="true">` : ''}
+                <span class="ribbon-text">${completionLabel}</span>
             </div>
         ` : `
             <div class="game-progress-overlay" aria-label="Achievement progress: ${progressData.earned} out of ${progressData.total} achievements unlocked, ${progressData.percentage}%">
                 <div class="achievement-progress">
+                    ${platformIconSrc ? `<img src="${platformIconSrc}" alt="" class="progress-platform-icon" aria-hidden="true">` : ''}
                     <span class="achievement-count">${progressData.earned}/${progressData.total}</span>
                 </div>
             </div>
@@ -612,12 +617,6 @@ class AchievementDashboard {
                          <div class="game-image-fallback" style="display: none;" aria-hidden="true">${safeName}</div>` :
                         `<div class="game-image-fallback" aria-hidden="true">${safeName}</div>`
                     }
-                    <div class="game-platform ${game.platform}" aria-label="${game.platform} platform">
-                        ${game.platform === 'steam' ? '<img src="assets/icons/steam.svg" alt="" class="platform-icon" aria-hidden="true">' : 
-                          game.platform === 'gog' ? '<img src="assets/icons/gog.svg" alt="" class="platform-icon" aria-hidden="true">' : 
-                          game.platform === 'retroachievements' ? '<img src="assets/icons/ra-icon.webp" alt="" class="platform-icon" aria-hidden="true">' : 
-                          game.platform.toUpperCase()}
-                    </div>
                 </div>
                 ${!progressData.isComplete ? completionHTML : ''}
                 ${progressData.isComplete ? completionHTML : ''}
