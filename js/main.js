@@ -120,10 +120,43 @@ class AchievementDashboard {
                     if (Array.isArray(platformGames)) {
                         // Add platform info to each game
                         platformGames.forEach(game => {
-                            allGames.push({
-                                ...game,
-                                platform: platform
-                            });
+                            // Handle RetroAchievements games with subsets - expand into separate entries
+                            if (platform === 'retroachievements' && game.subsets && typeof game.subsets === 'object') {
+                                Object.entries(game.subsets).forEach(([key, subset]) => {
+                                    // 'Base' uses the parent platformId, otherwise use the subset key as ID
+                                    const isBase = key === 'Base';
+                                    const setId = isBase ? game.platformId : key;
+                                    // Build display name: Base uses parent name, subsets use "ParentName: SubsetName"
+                                    const displayName = isBase 
+                                        ? (game.name || null)
+                                        : (game.name && subset.name ? `${game.name}: ${subset.name}` : subset.name || null);
+                                    allGames.push({
+                                        ...game,
+                                        // Override with subset-specific data
+                                        platformId: setId,
+                                        // Store parent ID and subset info for link generation
+                                        parentId: game.platformId,
+                                        isSubset: !isBase,
+                                        subsetId: isBase ? null : key,
+                                        name: displayName,
+                                        coverImage: subset.coverImage || null,
+                                        totalAchievements: subset.totalAchievements,
+                                        unlockedAchievements: subset.unlockedAchievements,
+                                        lastAchievement: subset.lastAchievement || game.lastAchievement,
+                                        playedTime: subset.playedTime || game.playedTime,
+                                        // Tags are shared from parent
+                                        tags: game.tags,
+                                        platform: platform,
+                                        // Remove subsets to avoid confusion
+                                        subsets: undefined
+                                    });
+                                });
+                            } else {
+                                allGames.push({
+                                    ...game,
+                                    platform: platform
+                                });
+                            }
                         });
                     }
                 } catch (error) {
@@ -426,10 +459,15 @@ class AchievementDashboard {
     getGameLink(game) {
         if (!game.platformId) return null;
         
+        if (game.platform === 'retroachievements') {
+            const baseUrl = `https://retroachievements.org/game/${game.parentId || game.platformId}`;
+            // Add ?set= parameter for subsets
+            return game.isSubset && game.subsetId ? `${baseUrl}?set=${game.subsetId}` : baseUrl;
+        }
+        
         const linkTemplates = {
             steam: `https://steamcommunity.com/stats/${game.platformId}/achievements`,
-            gog: `https://www.gog.com/game/${game.platformId}`,
-            retroachievements: `https://retroachievements.org/game/${game.platformId}`
+            gog: `https://www.gog.com/game/${game.platformId}`
         };
         
         return linkTemplates[game.platform] || null;
@@ -586,6 +624,9 @@ class AchievementDashboard {
         if (game.playedTime) {
             tooltipLines.push(`Total hours: ${formatPlayedTime(game.playedTime)}`);
         }
+        if (game.console) {
+            tooltipLines.push(`Console: ${game.console}`);
+        }
         if (game.tags && game.tags.length > 0) {
             tooltipLines.push(`Tags: ${game.tags.join(', ')}`);
         }
@@ -595,15 +636,21 @@ class AchievementDashboard {
         const platformIconSrc = game.platform === 'steam' ? 'assets/icons/steam.svg' : 
                                 game.platform === 'gog' ? 'assets/icons/gog.svg' : 
                                 game.platform === 'retroachievements' ? 'assets/icons/ra-icon.webp' : '';
+        // Console icon for RetroAchievements games (normalize name to lowercase, replace spaces with hyphens)
+        const consoleIconSrc = game.platform === 'retroachievements' && game.console 
+            ? `assets/icons/consoles/${game.console.toLowerCase().replace(/\s+/g, '-')}.png` 
+            : '';
         const completionHTML = progressData.isComplete ? `
             <div class="floating-ribbon" aria-label="All achievements completed">
                 ${platformIconSrc ? `<img src="${platformIconSrc}" alt="" class="ribbon-platform-icon" aria-hidden="true">` : ''}
+                ${consoleIconSrc ? `<img src="${consoleIconSrc}" alt="${game.console}" class="ribbon-console-icon" aria-hidden="true" onerror="this.style.display='none'">` : ''}
                 <span class="ribbon-text">${completionLabel}</span>
             </div>
         ` : `
             <div class="game-progress-overlay" aria-label="Achievement progress: ${progressData.earned} out of ${progressData.total} achievements unlocked, ${progressData.percentage}%">
                 <div class="achievement-progress">
                     ${platformIconSrc ? `<img src="${platformIconSrc}" alt="" class="progress-platform-icon" aria-hidden="true">` : ''}
+                    ${consoleIconSrc ? `<img src="${consoleIconSrc}" alt="${game.console}" class="progress-console-icon" aria-hidden="true" onerror="this.style.display='none'">` : ''}
                     <span class="achievement-count">${progressData.earned}/${progressData.total}</span>
                 </div>
             </div>

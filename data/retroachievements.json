@@ -1,15 +1,20 @@
 [
   {
     "platformId": "19576",
-    "totalAchievements": 17,
-    "unlockedAchievements": 15,
-    "lastAchievement": "2025-12-19",
-    "playedTime": 5,
+    "subsets": {
+      "Base": {
+        "totalAchievements": 17,
+        "unlockedAchievements": 15,
+        "lastAchievement": "2025-12-19",
+        "playedTime": 5,
+        "coverImage": "assets/covers/retroachievements/19576.png"
+      }
+    },
     "tags": [
       "Roguelike",
       "Pixel Art"
     ],
     "name": "Porklike: Wurst Comes to Worst",
-    "coverImage": "assets/covers/retroachievements/19576.png"
+    "console": "Game Boy"
   }
 ]

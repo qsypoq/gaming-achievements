@@ -34,6 +34,7 @@ const COVERS_DIR = path.join(process.cwd(), 'assets', 'covers');
 // API key can be set via environment variable or will prompt for manual entry
 const RA_API_KEY = process.env.RA_KEY || '';
 const RA_API_BASE = 'https://retroachievements.org/API/API_GetGame.php';
+const RA_CONSOLES_API = 'https://retroachievements.org/API/API_GetConsoleIDs.php';
 const RA_IMAGE_BASE = 'https://media.retroachievements.org';
 
 // Steam image formats (in order of preference)
@@ -53,6 +54,7 @@ class CoverFetcher {
             gog: false,
             retroachievements: false
         };
+        this.raConsoles = null; // Cache for RetroAchievements console list
         this.ensureCoversDirectory();
     }
 
@@ -81,6 +83,7 @@ class CoverFetcher {
             console.log('====================================\n');
 
             this.loadGamesData();
+            await this.fetchRAConsoles(); // Pre-fetch console list
             await this.fetchAllMissingData();
             this.saveGamesData();
             this.printSummary();
@@ -125,6 +128,127 @@ class CoverFetcher {
             
             for (let i = 0; i < games.length; i++) {
                 const game = games[i];
+                
+                // Handle RetroAchievements games with subsets
+                if (platform === 'retroachievements' && game.subsets && typeof game.subsets === 'object') {
+                    console.log(`[${i + 1}/${games.length}] Game ${game.platformId} with ${Object.keys(game.subsets).length} subsets`);
+                    
+                    // Fetch parent game data once for all subsets
+                    const parentGameData = await this.fetchRetroAchievementsGameData(game.platformId);
+                    if (!parentGameData) {
+                        console.log(`  ⚠️  Could not fetch parent game data for ${game.platformId}`);
+                    }
+                    
+                    const subsetEntries = Object.entries(game.subsets);
+                    for (let j = 0; j < subsetEntries.length; j++) {
+                        const [key, subset] = subsetEntries[j];
+                        const isBase = key === 'Base';
+                        const setDisplayName = subset.name || `${key} (${isBase ? game.platformId : key})`;
+                        console.log(`  [Subset ${j + 1}/${subsetEntries.length}] ${setDisplayName}`);
+                        
+                        let needsUpdate = false;
+                        
+                        // Fetch missing name
+                        if (isBase) {
+                            // Base name is stored at parent level
+                            if (!game.name) {
+                                console.log(`    📝 Fetching parent name...`);
+                                if (parentGameData && parentGameData.Title) {
+                                    // Get clean parent title (strip content inside ~ like ~Hack~ or ~Subset~)
+                                    let parentTitle = parentGameData.Title;
+                                    parentTitle = parentTitle.replace(/~[^~]*~/g, '').trim();
+                                    game.name = parentTitle;
+                                    this.updated[platform] = true;
+                                    needsUpdate = true;
+                                    console.log(`    ✅ Name added: ${game.name}`);
+                                } else {
+                                    console.log(`    ❌ Could not fetch name`);
+                                }
+                            }
+                            
+                            // Fetch console (stored at parent level)
+                            if (!game.console) {
+                                if (parentGameData && parentGameData.ConsoleID) {
+                                    const consoleName = this.getConsoleName(parentGameData.ConsoleID);
+                                    if (consoleName) {
+                                        game.console = consoleName;
+                                        this.updated[platform] = true;
+                                        needsUpdate = true;
+                                        console.log(`    🎮 Console: ${game.console}`);
+                                    }
+                                }
+                            }
+                        } else {
+                            // Non-base subsets store just the subset name
+                            if (!subset.name) {
+                                console.log(`    📝 Fetching subset name...`);
+                                // Fetch subset data to get its name
+                                const subsetGameData = await this.fetchRetroAchievementsGameData(key);
+                                if (subsetGameData && subsetGameData.Title) {
+                                    // Extract subset name from title (e.g., "Game ~Subset - Bonus~" -> "Bonus")
+                                    let subsetTitle = subsetGameData.Title;
+                                    const subsetMatch = subsetTitle.match(/~Subset\s*[-–]\s*([^~]+)~/i);
+                                    if (subsetMatch) {
+                                        subset.name = subsetMatch[1].trim();
+                                    } else {
+                                        // Fallback: clean the title and use it
+                                        subset.name = subsetTitle.replace(/~[^~]*~/g, '').trim();
+                                    }
+                                    this.updated[platform] = true;
+                                    needsUpdate = true;
+                                    console.log(`    ✅ Name added: ${subset.name}`);
+                                } else {
+                                    console.log(`    ❌ Could not fetch name`);
+                                }
+                            }
+                        }
+                        
+                        // Fetch missing cover for subset
+                        if (!subset.coverImage || FORCE_REFRESH) {
+                            if (FORCE_REFRESH && subset.coverImage) {
+                                console.log(`    🔄 Force refreshing cover...`);
+                            } else {
+                                console.log(`    🖼️  Fetching cover image...`);
+                            }
+                            
+                            let coverUrl;
+                            if (!isBase && subset.coverId) {
+                                // Non-base subsets use coverId from JSON
+                                coverUrl = `${RA_IMAGE_BASE}/Images/${subset.coverId}.png`;
+                                console.log(`    🖼️  Using subset coverId: ${coverUrl}`);
+                            } else if (parentGameData && parentGameData.ImageIcon) {
+                                // Base subsets use parent game's icon
+                                coverUrl = `${RA_IMAGE_BASE}${parentGameData.ImageIcon}`;
+                                console.log(`    🖼️  Found icon: ${coverUrl}`);
+                            }
+                            
+                            if (coverUrl) {
+                                const ext = coverUrl.match(/\.(png|jpg|jpeg|gif|webp)$/i)?.[1] || 'png';
+                                // Use different filename for base vs subset
+                                const fileId = isBase ? game.platformId : key;
+                                const localPath = await this.downloadImage(coverUrl, platform, fileId, `cover.${ext}`);
+                                if (localPath) {
+                                    subset.coverImage = localPath;
+                                    this.updated[platform] = true;
+                                    needsUpdate = true;
+                                    console.log(`    ✅ Cover added!`);
+                                } else {
+                                    console.log(`    ❌ Could not download cover`);
+                                }
+                            } else {
+                                console.log(`    ❌ No icon found`);
+                            }
+                        } else if (!needsUpdate) {
+                            console.log(`    ✅ Already complete`);
+                        }
+                        
+                        // Be respectful to APIs
+                        await this.delay(300);
+                    }
+                    console.log();
+                    continue;
+                }
+                
                 const displayName = game.name || `${platform} game ${game.platformId}`;
                 console.log(`[${i + 1}/${games.length}] ${displayName}`);
 
@@ -261,6 +385,54 @@ class CoverFetcher {
         });
     }
 
+    async fetchRAConsoles() {
+        if (!RA_API_KEY) {
+            console.log('⚠️  No RA_KEY set, skipping console fetch\n');
+            return;
+        }
+
+        console.log('🎮 Fetching RetroAchievements console list...');
+        
+        return new Promise((resolve) => {
+            const url = `${RA_CONSOLES_API}?y=${RA_API_KEY}`;
+
+            const req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    try {
+                        const result = JSON.parse(data);
+                        if (Array.isArray(result)) {
+                            this.raConsoles = result;
+                            console.log(`✅ Loaded ${result.length} consoles\n`);
+                        }
+                        resolve();
+                    } catch (e) {
+                        console.log(`⚠️  Parse error: ${e.message}\n`);
+                        resolve();
+                    }
+                });
+            });
+            
+            req.on('error', (e) => {
+                console.log(`⚠️  Request error: ${e.message}\n`);
+                resolve();
+            });
+            
+            req.setTimeout(15000, () => {
+                console.log('⚠️  Console fetch timeout\n');
+                req.destroy();
+                resolve();
+            });
+        });
+    }
+
+    getConsoleName(consoleId) {
+        if (!this.raConsoles || !consoleId) return null;
+        const console = this.raConsoles.find(c => c.ID === consoleId);
+        return console ? console.Name : null;
+    }
+
     async fetchGameCover(game, platform) {
         switch (platform) {
             case 'steam':
@@ -279,14 +451,14 @@ class CoverFetcher {
     async fetchRetroAchievementsCover(game, platform) {
         try {
             const gameId = game.platformId;
-            console.log(`  🔍 Fetching cover image from RetroAchievements API...`);
+            console.log(`  🔍 Fetching icon from RetroAchievements API...`);
             
             const gameData = await this.fetchRetroAchievementsGameData(gameId);
             
-            if (gameData && gameData.ImageBoxArt) {
-                // Build the full image URL
-                const coverUrl = `${RA_IMAGE_BASE}${gameData.ImageBoxArt}`;
-                console.log(`  🖼️  Found cover: ${coverUrl}`);
+            if (gameData && gameData.ImageIcon) {
+                // Build the full image URL using ImageIcon (set/subset icon)
+                const coverUrl = `${RA_IMAGE_BASE}${gameData.ImageIcon}`;
+                console.log(`  🖼️  Found icon: ${coverUrl}`);
                 
                 // Determine file extension from URL
                 const ext = coverUrl.match(/\.(png|jpg|jpeg|gif|webp)$/i)?.[1] || 'png';
@@ -298,7 +470,7 @@ class CoverFetcher {
                 }
             }
             
-            console.log(`  ❌ No cover found for game ${gameId}`);
+            console.log(`  ❌ No icon found for game ${gameId}`);
             return false;
         } catch (error) {
             console.log(`  ❌ Error: ${error.message}`);
@@ -600,9 +772,26 @@ class CoverFetcher {
         
         for (const platform of Object.keys(this.platformData)) {
             const games = this.platformData[platform];
-            const platformTotal = games.length;
-            const platformWithNames = games.filter(g => g.name).length;
-            const platformWithCovers = games.filter(g => g.coverImage).length;
+            let platformTotal = 0;
+            let platformWithNames = 0;
+            let platformWithCovers = 0;
+            
+            games.forEach(g => {
+                if (g.subsets) {
+                    // Count each subset as a separate entry
+                    Object.entries(g.subsets).forEach(([key, subset]) => {
+                        platformTotal++;
+                        const isBase = key === 'Base';
+                        // Base uses parent name, non-base uses subset name
+                        if (isBase ? g.name : subset.name) platformWithNames++;
+                        if (subset.coverImage) platformWithCovers++;
+                    });
+                } else {
+                    platformTotal++;
+                    if (g.name) platformWithNames++;
+                    if (g.coverImage) platformWithCovers++;
+                }
+            });
             
             total += platformTotal;
             withNames += platformWithNames;
@@ -629,7 +818,11 @@ class CoverFetcher {
 
         // List games without names
         for (const platform of Object.keys(this.platformData)) {
-            const missingNames = this.platformData[platform].filter(g => !g.name);
+            const missingNames = this.platformData[platform].filter(g => {
+                // For games with subsets, name is at parent level
+                if (g.subsets) return !g.name;
+                return !g.name;
+            });
             if (missingNames.length > 0) {
                 console.log(`\n📝 Manual names needed for ${platform}:`);
                 missingNames.forEach(g => console.log(`  - ${g.platformId}`));
@@ -638,10 +831,24 @@ class CoverFetcher {
 
         // List games without covers
         for (const platform of Object.keys(this.platformData)) {
-            const missingCovers = this.platformData[platform].filter(g => !g.coverImage);
+            const missingCovers = [];
+            this.platformData[platform].forEach(g => {
+                if (g.subsets) {
+                    // Check each subset for missing covers
+                    Object.entries(g.subsets).forEach(([key, subset]) => {
+                        if (!subset.coverImage) {
+                            const isBase = key === 'Base';
+                            const displayName = isBase ? g.name : (g.name && subset.name ? `${g.name}: ${subset.name}` : subset.name);
+                            missingCovers.push(displayName || `${g.platformId}/${key}`);
+                        }
+                    });
+                } else if (!g.coverImage) {
+                    missingCovers.push(g.name || g.platformId);
+                }
+            });
             if (missingCovers.length > 0) {
                 console.log(`\n🖼️  Manual covers needed for ${platform}:`);
-                missingCovers.forEach(g => console.log(`  - ${g.name || g.platformId}`));
+                missingCovers.forEach(name => console.log(`  - ${name}`));
             }
         }
     }
