@@ -205,5 +205,18 @@
     ],
     "name": "Turnip Boy Commits Tax Evasion",
     "coverImage": "assets/covers/steam/1205450.jpg"
+  },
+  {
+    "platformId": "2060160",
+    "totalAchievements": 59,
+    "unlockedAchievements": 59,
+    "lastAchievement": "2025-12-20",
+    "playedTime": 46,
+    "tags": [
+      "Programming",
+      "Idle"
+    ],
+    "name": "The Farmer Was Replaced",
+    "coverImage": "assets/covers/steam/2060160.jpg"
   }
 ]

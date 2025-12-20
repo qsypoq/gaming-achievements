@@ -28,6 +28,8 @@ jobs:
     
     - name: Fetch game names and covers
       run: node scripts/fetch-covers.js
+      env:
+        RA_KEY: ${{ secrets.RA_KEY }}
       
     - name: Check for changes
       id: check-changes
@@ -64,7 +66,7 @@ jobs:
           echo "📋 **No changes** - All games already have names and cover images or none could be found." >> $GITHUB_STEP_SUMMARY
         fi
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Manual cover sources:" >> $GITHUB_STEP_SUMMARY
+        echo "### Cover sources:" >> $GITHUB_STEP_SUMMARY
         echo "- **Steam**: Automatically fetched ✅" >> $GITHUB_STEP_SUMMARY  
         echo "- **GOG**: Add manually from store pages" >> $GITHUB_STEP_SUMMARY
-        echo "- **RetroAchievements**: Add manually from game pages" >> $GITHUB_STEP_SUMMARY
+        echo "- **RetroAchievements**: Automatically fetched ✅" >> $GITHUB_STEP_SUMMARY

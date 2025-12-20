@@ -30,6 +30,12 @@ const STEAM_SEARCH_API = 'https://store.steampowered.com/api/storesearch/';
 const STEAM_CDN_BASE = 'https://cdn.akamai.steamstatic.com/steam/apps/';
 const COVERS_DIR = path.join(process.cwd(), 'assets', 'covers');
 
+// RetroAchievements API configuration
+// API key can be set via environment variable or will prompt for manual entry
+const RA_API_KEY = process.env.RA_KEY || '';
+const RA_API_BASE = 'https://retroachievements.org/API/API_GetGame.php';
+const RA_IMAGE_BASE = 'https://media.retroachievements.org';
+
 // Steam image formats (in order of preference)
 const STEAM_IMAGE_FORMATS = [
     'header.jpg',                   // Standard header (460x215) - preferred
@@ -209,28 +215,47 @@ class CoverFetcher {
     }
 
     async fetchRetroAchievementsGameName(gameId) {
-        return new Promise((resolve) => {
-            const url = `https://retroachievements.org/API/API_GetGame.php?i=${gameId}`;
+        const gameData = await this.fetchRetroAchievementsGameData(gameId);
+        if (gameData && gameData.Title) {
+            // Strip content inside ~ (like ~Hack~ or ~Subset~)
+            let title = gameData.Title;
+            title = title.replace(/~[^~]*~/g, '').trim();
+            return title;
+        }
+        return null;
+    }
 
-            https.get(url, (res) => {
+    async fetchRetroAchievementsGameData(gameId) {
+        if (!RA_API_KEY) {
+            console.log(`    ⚠️  No RA_KEY set. Set the RA_KEY environment variable.`);
+            return null;
+        }
+
+        return new Promise((resolve) => {
+            const url = `${RA_API_BASE}?i=${gameId}&y=${RA_API_KEY}`;
+
+            const req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
                 let data = '';
                 res.on('data', chunk => data += chunk);
                 res.on('end', () => {
                     try {
                         const result = JSON.parse(data);
-                        if (result && result.Title) {
-                            resolve(result.Title);
-                        } else {
-                            console.log(`    ⚠️  RetroAchievements API returned no data for ${gameId}`);
-                            resolve(null);
-                        }
+                        resolve(result);
                     } catch (e) {
                         console.log(`    ⚠️  Parse error: ${e.message}`);
                         resolve(null);
                     }
                 });
-            }).on('error', (e) => {
+            });
+            
+            req.on('error', (e) => {
                 console.log(`    ⚠️  Request error: ${e.message}`);
+                resolve(null);
+            });
+            
+            req.setTimeout(15000, () => {
+                console.log(`    ⚠️  Request timeout for ${gameId}`);
+                req.destroy();
                 resolve(null);
             });
         });
@@ -254,14 +279,18 @@ class CoverFetcher {
     async fetchRetroAchievementsCover(game, platform) {
         try {
             const gameId = game.platformId;
-            console.log(`  🔍 Fetching game icon from RetroAchievements...`);
+            console.log(`  🔍 Fetching cover image from RetroAchievements API...`);
             
-            // Scrape the game page to find the game icon (mastery badge)
-            const iconUrl = await this.discoverRetroAchievementsIcon(gameId);
+            const gameData = await this.fetchRetroAchievementsGameData(gameId);
             
-            if (iconUrl) {
-                console.log(`  🖼️  Found icon: ${iconUrl}`);
-                const localPath = await this.downloadImage(iconUrl, platform, game.platformId, 'icon.png');
+            if (gameData && gameData.ImageBoxArt) {
+                // Build the full image URL
+                const coverUrl = `${RA_IMAGE_BASE}${gameData.ImageBoxArt}`;
+                console.log(`  🖼️  Found cover: ${coverUrl}`);
+                
+                // Determine file extension from URL
+                const ext = coverUrl.match(/\.(png|jpg|jpeg|gif|webp)$/i)?.[1] || 'png';
+                const localPath = await this.downloadImage(coverUrl, platform, game.platformId, `cover.${ext}`);
                 if (localPath) {
                     game.coverImage = localPath;
                     console.log(`  💾 Downloaded to: ${localPath}`);
@@ -269,50 +298,12 @@ class CoverFetcher {
                 }
             }
             
-            console.log(`  ❌ No icon found for game ${gameId}`);
+            console.log(`  ❌ No cover found for game ${gameId}`);
             return false;
         } catch (error) {
             console.log(`  ❌ Error: ${error.message}`);
             return false;
         }
-    }
-
-    async discoverRetroAchievementsIcon(gameId) {
-        return new Promise((resolve) => {
-            const url = `https://retroachievements.org/game/${gameId}`;
-            
-            https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
-                let data = '';
-                res.on('data', chunk => data += chunk);
-                res.on('end', () => {
-                    try {
-                        // Look for the game icon image with "Game Icon" alt text
-                        const iconPatterns = [
-                            /src="(https:\/\/media\.retroachievements\.org\/Images\/\d+\.png)"[^>]*alt="Game Icon"/i,
-                            /alt="Game Icon"[^>]*src="(https:\/\/media\.retroachievements\.org\/Images\/\d+\.png)"/i,
-                            /src="(\/Images\/\d+\.png)"[^>]*alt="Game Icon"/i,
-                            /alt="Game Icon"[^>]*src="(\/Images\/\d+\.png)"/i
-                        ];
-                        
-                        for (const pattern of iconPatterns) {
-                            const match = data.match(pattern);
-                            if (match) {
-                                let iconUrl = match[1];
-                                if (iconUrl.startsWith('/')) {
-                                    iconUrl = `https://media.retroachievements.org${iconUrl}`;
-                                }
-                                resolve(iconUrl);
-                                return;
-                            }
-                        }
-                        
-                        resolve(null);
-                    } catch (e) {
-                        resolve(null);
-                    }
-                });
-            }).on('error', () => resolve(null));
-        });
     }
 
     async fetchSteamCover(game, platform) {
