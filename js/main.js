@@ -640,18 +640,21 @@ class AchievementDashboard {
         const consoleIconSrc = game.platform === 'retroachievements' && game.console 
             ? `assets/icons/consoles/${game.console.toLowerCase().replace(/\s+/g, '-')}.png` 
             : '';
+        // Ribbon icon for 100% complete non-RA games
+        const ribbonIconSrc = game.platform !== 'retroachievements' ? 'assets/icons/ribbon.png' : '';
         const completionHTML = progressData.isComplete ? `
             <div class="floating-ribbon" aria-label="All achievements completed">
                 ${platformIconSrc ? `<img src="${platformIconSrc}" alt="" class="ribbon-platform-icon" aria-hidden="true">` : ''}
-                ${consoleIconSrc ? `<img src="${consoleIconSrc}" alt="${game.console}" class="ribbon-console-icon" aria-hidden="true" onerror="this.style.display='none'">` : ''}
                 <span class="ribbon-text">${completionLabel}</span>
+                ${consoleIconSrc ? `<img src="${consoleIconSrc}" alt="${game.console}" class="ribbon-console-icon" aria-hidden="true" onerror="this.style.display='none'">` : ''}
+                ${ribbonIconSrc ? `<img src="${ribbonIconSrc}" alt="" class="ribbon-badge-icon" aria-hidden="true" onerror="this.style.display='none'">` : ''}
             </div>
         ` : `
             <div class="game-progress-overlay" aria-label="Achievement progress: ${progressData.earned} out of ${progressData.total} achievements unlocked, ${progressData.percentage}%">
                 <div class="achievement-progress">
                     ${platformIconSrc ? `<img src="${platformIconSrc}" alt="" class="progress-platform-icon" aria-hidden="true">` : ''}
-                    ${consoleIconSrc ? `<img src="${consoleIconSrc}" alt="${game.console}" class="progress-console-icon" aria-hidden="true" onerror="this.style.display='none'">` : ''}
                     <span class="achievement-count">${progressData.earned}/${progressData.total}</span>
+                    ${consoleIconSrc ? `<img src="${consoleIconSrc}" alt="${game.console}" class="progress-console-icon" aria-hidden="true" onerror="this.style.display='none'">` : ''}
                 </div>
             </div>
         `;

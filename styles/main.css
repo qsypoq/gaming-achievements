@@ -807,6 +807,13 @@ body {
     filter: brightness(1.2);
 }
 
+.ribbon-badge-icon {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+    filter: brightness(1.2);
+}
+
 .ribbon-icon {
     width: 16px;
     height: 16px;

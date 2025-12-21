@@ -185,8 +185,8 @@
   {
     "platformId": "1454400",
     "totalAchievements": 637,
-    "unlockedAchievements": 636,
-    "lastAchievement": "2025-12-14",
+    "unlockedAchievements": 637,
+    "lastAchievement": "2025-12-21",
     "playedTime": 721,
     "tags": [
       "Idle"
@@ -218,5 +218,16 @@
     ],
     "name": "The Farmer Was Replaced",
     "coverImage": "assets/covers/steam/2060160.jpg"
+  },
+  {
+    "platformId": "3424610",
+    "totalAchievements": 81,
+    "unlockedAchievements": 57,
+    "lastAchievement": "2025-12-21",
+    "playedTime": 137,
+    "tags": [
+      "Creature Collection",
+      "Idle"
+    ]
   }
 ]
