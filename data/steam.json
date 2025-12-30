@@ -241,7 +241,9 @@
     "tags": [
       "Idle",
       "Pixel Art"
-    ]
+    ],
+    "name": "Legends of Dragaea: Idle Dungeons",
+    "coverImage": "assets/covers/steam/2712380.jpg"
   },
   {
     "platformId": "1578160",
@@ -252,7 +254,9 @@
     "tags": [
       "Programming",
       "Pixel Art"
-    ]
+    ],
+    "name": "Bots Are Stupid",
+    "coverImage": "assets/covers/steam/1578160.jpg"
   },
   {
     "platformId": "2013730",
@@ -263,6 +267,8 @@
     "tags": [
       "Idle",
       "Pixel Art"
-    ]
+    ],
+    "name": "Gourdlets",
+    "coverImage": "assets/covers/steam/2013730.jpg"
   }
 ]
