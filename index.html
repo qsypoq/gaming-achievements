@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -21,36 +22,56 @@
             <p class="subtitle">Tracking progress across Steam, GOG & RetroAchievements</p>
         </header>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-trophy"></i>
+        <!-- Overview Stats -->
+        <section class="stats-section">
+            <h2 class="section-title"><i class="fas fa-trophy"></i> Overview</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number" id="total-achievements">0</h3>
+                        <p class="stat-label">Total Achievements</p>
+                    </div>
                 </div>
-                <div class="stat-content">
-                    <h3 class="stat-number" id="total-achievements">0</h3>
-                    <p class="stat-label">Total Achievements</p>
-                </div>
-            </div>
 
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-star"></i>
-                </div>
-                <div class="stat-content">
-                    <h3 class="stat-number" id="rare-achievements">0</h3>
-                    <p class="stat-label">Completed Games</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="stat-content">
-                    <h3 class="stat-number" id="total-time">0h</h3>
-                    <p class="stat-label">Total Time Played</p>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number" id="rare-achievements">0</h3>
+                        <p class="stat-label">Completed Games</p>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <!-- Breakdown Charts -->
+        <section class="stats-section">
+            <h2 class="section-title"><i class="fas fa-chart-pie"></i> Breakdown</h2>
+            <div class="charts-row charts-row-3">
+                <div class="chart-container">
+                    <h3 class="chart-title">Games by Platform</h3>
+                    <canvas id="platformGamesChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3 class="chart-title">Achievements by Platform</h3>
+                    <canvas id="platformAchievementsChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3 class="chart-title">Games by Console</h3>
+                    <canvas id="consolesChart"></canvas>
+                </div>
+            </div>
+            <div class="charts-row">
+                <div class="chart-container chart-wide">
+                    <h3 class="chart-title">Games by Tag</h3>
+                    <canvas id="tagsChart"></canvas>
+                </div>
+            </div>
+        </section>
 
         <div class="filters">
             <div class="filter-group">
@@ -97,7 +118,7 @@
                 <i class="fas fa-spinner fa-spin"></i>
                 <p>Loading achievements...</p>
             </div>
-            
+
             <div class="games-grid" id="games-grid">
                 <!-- Games will be dynamically loaded here -->
             </div>
