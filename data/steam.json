@@ -222,14 +222,47 @@
   {
     "platformId": "3424610",
     "totalAchievements": 81,
-    "unlockedAchievements": 57,
-    "lastAchievement": "2025-12-21",
-    "playedTime": 137,
+    "unlockedAchievements": 73,
+    "lastAchievement": "2025-12-27",
+    "playedTime": 188,
     "tags": [
       "Creature Collection",
       "Idle"
     ],
     "name": "Fantasy Idle Dungeon",
     "coverImage": "assets/covers/steam/3424610.jpg"
+  },
+  {
+    "platformId": "2712380",
+    "totalAchievements": 52,
+    "unlockedAchievements": 50,
+    "lastAchievement": "2025-12-28",
+    "playedTime": 49,
+    "tags": [
+      "Idle",
+      "Pixel Art"
+    ]
+  },
+  {
+    "platformId": "1578160",
+    "totalAchievements": 32,
+    "unlockedAchievements": 32,
+    "lastAchievement": "2025-12-28",
+    "playedTime": 12,
+    "tags": [
+      "Programming",
+      "Pixel Art"
+    ]
+  },
+  {
+    "platformId": "2013730",
+    "totalAchievements": 10,
+    "unlockedAchievements": 10,
+    "lastAchievement": "2025-12-29",
+    "playedTime": 8,
+    "tags": [
+      "Idle",
+      "Pixel Art"
+    ]
   }
 ]

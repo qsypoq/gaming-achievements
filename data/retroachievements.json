@@ -4,14 +4,14 @@
     "subsets": {
       "Base": {
         "totalAchievements": 17,
-        "unlockedAchievements": 15,
-        "lastAchievement": "2025-12-19",
-        "playedTime": 5,
+        "unlockedAchievements": 16,
+        "lastAchievement": "2025-12-29",
+        "playedTime": 6,
         "coverImage": "assets/covers/retroachievements/19576.png"
       }
     },
     "tags": [
-      "Roguelike",
+      "Traditional Roguelike",
       "Pixel Art"
     ],
     "name": "Porklike: Wurst Comes to Worst",
